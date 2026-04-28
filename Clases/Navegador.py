@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from Clases.Pestaña import Pestana
+import time
 
 
 class MiNavegador:
@@ -14,7 +15,6 @@ class MiNavegador:
         self.app = tk.Toplevel(self.root)
         self.app.geometry("800x600")
         self.app.minsize(400, 300)
-
         
         # quita los bordes de cerrar, minimizar y maximizar
         self.app.overrideredirect(True)
@@ -30,7 +30,7 @@ class MiNavegador:
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
         self.barra_titulo.pack(fill="x", side="top")
-        lbl_titulo = tk.Label(self.barra_titulo, text="Super Ultra Hyper Navegador sin uso de ram por que esta cara", 
+        lbl_titulo = tk.Label(self.barra_titulo, text=" navegador", 
                               bg="#2c3e50", fg="white", font=("Arial", 10, "bold"))
         lbl_titulo.pack(side="left", padx=10)
 
@@ -62,18 +62,11 @@ class MiNavegador:
         self.frame_nav.pack(fill="x")
         self.url_var = tk.StringVar()
         self.url_var.trace_add("write", self.validar_entrada)
-
-
         self.entrada_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
-        self.entrada_url.pack(side="left", fill="x", expand=True, padx=(10, 5))
-
+        self.entrada_url.pack(side="left", fill="x", expand=True, padx=10)
         self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
-
-
-            
         self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
-        self.btn_ir.pack(side="left", padx=(0, 10))
-            
+        self.btn_ir.pack(side="right", padx=10)        
         self.validar_entrada()
         btn_nueva = tk.Button(self.frame_nav, text="+", width=3,command=self.nueva_pestana)
         btn_nueva.pack(side="right")
@@ -93,7 +86,15 @@ class MiNavegador:
         
         self.btn_menu_color["menu"] = self.menu_colores
         self.btn_menu_color.pack(side="right", padx=10)
- 
+
+        # boton recargar
+        self.btn_refresh = tk.Button(self.frame_nav, text="recargar")
+        self.btn_refresh.config(command=self.cargar_archivo)
+        time.sleep(60)
+        self.btn_refresh.pack(side="right", padx=5)
+
+        
+
     def cambiar_color_fondo(self, color_bg, color_fg):
         pestana = self.pestana_actual()      # obtiene la pestaña activa
         pestana.area_texto.config(
@@ -166,19 +167,12 @@ class MiNavegador:
     def crear_area_contenido(self):
         self.notebook = ttk.Notebook(self.app)
         self.notebook.pack(fill="both", expand=True)
+
         self.pestanas = []
         self.nueva_pestana()
-
-    
-
-
-
-
-
-
     
     def nueva_pestana(self):
-        pestana = Pestana(self.notebook, self.abrir_link)
+        pestana = Pestana(self.notebook)
         self.pestanas.append(pestana)
      
     def pestana_actual(self):
@@ -194,10 +188,3 @@ class MiNavegador:
 
         pestana.cerrar()
         self.pestanas.pop(indice)
-
-
-    def abrir_link(self, url):
-        self.nueva_pestana()
-        pestana = self.pestana_actual()
-        pestana.url_var.set(url)
-        pestana.cargar_archivo(url, self.estado)
