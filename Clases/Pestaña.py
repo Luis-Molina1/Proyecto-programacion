@@ -11,18 +11,58 @@ class Pestana:
         self.frame = tk.Frame(notebook)
         self.on_link_click = on_link_click
         
+        self.crear_barra_navegacion()
+
         self.area_texto = tk.Text(self.frame, bg="white", font=("Arial", 12))
         self.area_texto.pack(fill="both", expand=True)
 
         self.notebook.add(self.frame, text=titulo)
         self.notebook.select(self.frame)
 
-    def cargar_archivo(self, url, estado_label):
+        
+        self.estado = tk.Label(
+            self.frame,
+            text="Listo",
+            anchor="w",
+            bg="#ecf0f1",
+            padx=10
+        )
+        self.estado.pack(fill="x", side="bottom")
+
+
+
+    def crear_barra_navegacion(self):
+        self.frame_nav = tk.Frame(self.frame, bg="#ecf0f1", pady=5)
+        self.frame_nav.pack(fill="x")
+
+        self.url_var = tk.StringVar()
+        self.entrada_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
+        self.entrada_url.pack(side="left", fill="x", expand=True, padx=(10, 5))
+
+        self.btn_ir = tk.Button(
+            self.frame_nav,
+            text="Ir",
+            command=self.cargar_desde_barra
+        )
+        self.btn_ir.pack(side="left", padx=(0, 10))
+
+    
+
+    def cargar_desde_barra(self):
+        url = self.url_var.get().strip()
+        if not url:
+            return
+        self.cargar_archivo(url)
+
+
+
+
+    def cargar_archivo(self, url):
         if not url.startswith("file:///") or not url.endswith((".html", ".htm") ):
             messagebox.showerror("Error", "Solo se permiten archivos locales de extencion html")
             return
 
-        estado_label.config(text="Cargando...")
+        self.estado.config(text="Cargando...")
         self.area_texto.delete("1.0", tk.END)
 
         ruta = url.replace("file:///", "")
@@ -33,7 +73,7 @@ class Pestana:
             self.area_texto.insert(
                 tk.END, f"No se encontró el archivo:\n{ruta}"
             )
-            estado_label.config(text="Error")
+            self.estado.config(text="Error")
             return
 
         try:
@@ -46,11 +86,11 @@ class Pestana:
             nombre = self.obtener_nombre_archivo(url)
             self.notebook.tab(self.frame, text=f"{nombre}")
 
-            estado_label.config(text="Completado")
+            self.estado.config(text="Completado")
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
-            estado_label.config(text="Error")
+            self.estado.config(text="Error")
 
     def cerrar(self):
         self.notebook.forget(self.frame)

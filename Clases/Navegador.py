@@ -195,7 +195,9 @@ class MiNavegador:
         pestana.cerrar()
         self.pestanas.pop(indice)
 
+
     def abrir_link(self, url):
-        self.url_var.set(url)
         self.nueva_pestana()
-        self.cargar_archivo()
+        pestana = self.pestana_actual()
+        pestana.url_var.set(url)
+        pestana.cargar_archivo(url, self.estado)
