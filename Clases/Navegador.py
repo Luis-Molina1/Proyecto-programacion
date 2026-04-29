@@ -9,6 +9,10 @@ class MiNavegador:
     def __init__(self, root):
         self.root = root
         self.root.title("Navegador")
+
+        self.color_bg_actual = "white"
+        self.color_fg_actual = "black"
+        
         self.root.attributes('-alpha', 0.0)
         self.root.geometry("0x0+0+0")
         
@@ -96,11 +100,10 @@ class MiNavegador:
         
 
     def cambiar_color_fondo(self, color_bg, color_fg):
-        pestana = self.pestana_actual()      # obtiene la pestaña activa
-        pestana.area_texto.config(
-            bg=color_bg,
-            fg=color_fg
-        )
+        self.color_bg_actual = color_bg
+        self.color_fg_actual = color_fg
+        pestana = self.pestana_actual()
+        pestana.area_texto.config(bg=color_bg, fg=color_fg)
         self.estado.config(text="Esquema de color actualizado")
 
     def cambio_color(self, boton, nuevoColor, colorOriginal):
@@ -172,7 +175,9 @@ class MiNavegador:
         self.nueva_pestana()
     
     def nueva_pestana(self):
-        pestana = Pestana(self.notebook)
+        pestana = Pestana(self.notebook, self.abrir_link, 
+                      bg=self.color_bg_actual, 
+                      fg=self.color_fg_actual)
         self.pestanas.append(pestana)
      
     def pestana_actual(self):
