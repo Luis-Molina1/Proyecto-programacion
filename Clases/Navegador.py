@@ -97,10 +97,6 @@ class MiNavegador:
             self.menu_historial = tk.Menu(self.menu_principal, tearoff=0)
             self.menu_principal.add_cascade(label="Historial", menu=self.menu_historial)
             self.btn_menu_principal.pack(side="right", padx=10)
-            self.btn_refresh = tk.Button(self.frame_nav, text="recargar")
-            self.btn_refresh.config(command=self.cargar_archivo)
-            #time.sleep(1)
-            self.btn_refresh.pack(side="right", padx=5)
         
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
