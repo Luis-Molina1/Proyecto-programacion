@@ -3,7 +3,7 @@ from tkinter import messagebox
 from tkinter import ttk
 from Clases.Pestaña import Pestana
 from Clases.Historial import Historial
-
+from Clases.Favoritos import Favoritos
 
 class MiNavegador:
     def __init__(self, root):
@@ -25,11 +25,13 @@ class MiNavegador:
         self.offset_y = 0
         self.root.bind("<Unmap>", self.al_minimizar_desde_barra)
         self.root.bind("<Map>", self.al_restaurar_desde_barra)
+        self.favoritos = Favoritos()
         self.crear_barra_titulo()
         self.crear_barra_navegacion()
         self.crear_barra_estado()
         self.crear_area_contenido()
         self.actualizar_menu_historial()
+        self.actualizar_menu_fav()
 
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
@@ -72,7 +74,8 @@ class MiNavegador:
                 
             self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
             self.btn_ir.pack(side="left", padx=(0, 10))
-                
+            self.btn_fav = tk.Button(self.frame_nav, text="fav", command=self.guardar_en_fav)
+            self.btn_fav.pack(side="left", padx=(0, 10))
             self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
             self.validar_entrada()
             
@@ -97,6 +100,8 @@ class MiNavegador:
             self.menu_historial = tk.Menu(self.menu_principal, tearoff=0)
             self.menu_principal.add_cascade(label="Historial", menu=self.menu_historial)
             self.btn_menu_principal.pack(side="right", padx=10)
+            self.menu_fav = tk.Menu(self.menu_principal, tearoff=0)
+            self.menu_principal.add_cascade(label="fav", menu=self.menu_fav)
         
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
@@ -195,7 +200,8 @@ class MiNavegador:
     def cargar_desde_historial(self, url):
         self.url_var.set(url)
         self.cargar_archivo()
-
+    def guardar_en_fav(self):
+        
 
     def nueva_pestana(self):
         pestana = Pestana(self.notebook, self.abrir_link, 
