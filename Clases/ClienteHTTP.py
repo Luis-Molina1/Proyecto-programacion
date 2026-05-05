@@ -1,4 +1,3 @@
-
 import http.client
 import re
 import time
@@ -26,21 +25,21 @@ class ClienteHTTP:
         if segundos_retraso > 0:
             print(f"Esperando {segundos_retraso} segundos...")
             time.sleep(segundos_retraso)
-            
+           
         try:
             conn.request("GET", ruta)
             respuesta = conn.getresponse()
-            
+            # variable para guardar estatus devuelto(para usar a futuro)
+            #estatus_devuelto = respuesta.reason
             print(f"Status: {respuesta.status} {respuesta.reason}")
-            print(respuesta.read().decode('utf-8', 'replace') )
+            # variable para guardar el contenido html
+            contenido = respuesta.read().decode('utf-8', 'replace')
+            
+            return contenido
+
         except Exception as e:
             print(f"Error: {e}")
+            return None
+
         finally:
             conn.close()
-"""if __name__ == "__main__":
-    cliente = ClienteHTTP()
-    
-    cliente.coneccion("https://icc.utalca.cl")
-    
-    print("\nPrueba terminada.")
-"""

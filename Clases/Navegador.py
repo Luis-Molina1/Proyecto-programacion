@@ -61,18 +61,16 @@ class MiNavegador:
         self.frame_nav = tk.Frame(self.app, bg="#ecf0f1", pady=5)
         self.frame_nav.pack(fill="x")
         self.url_var = tk.StringVar()
-        self.url_var.trace_add("write", self.validar_entrada)
-
 
         self.entrada_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
         self.entrada_url.pack(side="left", fill="x", expand=True, padx=(10, 5))
-
-        self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
-
-
             
         self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
         self.btn_ir.pack(side="left", padx=(0, 10))
+        
+        self.url_var.trace_add("write", self.validar_entrada)
+        
+        self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
             
         self.validar_entrada()
         btn_nueva = tk.Button(self.frame_nav, text="+", width=3,command=self.nueva_pestana)
@@ -168,14 +166,6 @@ class MiNavegador:
         self.notebook.pack(fill="both", expand=True)
         self.pestanas = []
         self.nueva_pestana()
-
-    
-
-
-
-
-
-
     
     def nueva_pestana(self):
         pestana = Pestana(self.notebook, self.abrir_link)
