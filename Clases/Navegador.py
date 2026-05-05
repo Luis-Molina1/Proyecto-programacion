@@ -65,12 +65,12 @@ class MiNavegador:
         self.frame_nav = tk.Frame(self.app, bg="#ecf0f1", pady=5)
         self.frame_nav.pack(fill="x")
         self.url_var = tk.StringVar()
-        self.url_var.trace_add("write", self.validar_entrada)
         self.entrada_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
         self.entrada_url.pack(side="left", fill="x", expand=True, padx=10)
         self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
         self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
         self.btn_ir.pack(side="right", padx=10)        
+        self.url_var.trace_add("write", self.validar_entrada)
         self.validar_entrada()
         btn_nueva = tk.Button(self.frame_nav, text="+", width=3,command=self.nueva_pestana)
         btn_nueva.pack(side="right")
@@ -92,13 +92,23 @@ class MiNavegador:
         self.btn_menu_color.pack(side="right", padx=10)
 
         # boton recargar
-        self.btn_refresh = tk.Button(self.frame_nav, text="recargar")
-        self.btn_refresh.config(command=self.cargar_archivo)
-        time.sleep(60)
+        self.btn_refresh = tk.Button(self.frame_nav, text="recargar", command=self.ejecutar_refresh)
         self.btn_refresh.pack(side="right", padx=5)
 
-        
+    def ejecutar_refresh(self):
+        self.estado.config(text="Recargando...")
+        self.btn_refresh.config(state="disabled")
+        self.app.config(cursor="watch")
+        self.app.update_idletasks()
+        self.root.after(2000, self.finalizar_refresh)
 
+    def finalizar_refresh(self):
+        self.cargar_archivo()
+        self.estado.config(text="pagina actualizada", fg="black")
+        self.btn_refresh.config(state="normal")
+        self.app.config(cursor="")
+        self.root.after(2000, lambda: self.estado.config(text="Listo"))
+      
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
         self.color_fg_actual = color_fg
@@ -155,6 +165,10 @@ class MiNavegador:
         url = self.entrada_url.get().strip()
         pestana = self.pestana_actual()
         pestana.cargar_archivo(url, self.estado)
+
+    def abrir_link(self, url):
+        self.url_var.set(url)
+        self.cargar_archivo()
 
     def confirmar_cierre(self):
         if messagebox.askokcancel("Confirmar", "¿Seguro que quieres cerrar el navegador?"):
