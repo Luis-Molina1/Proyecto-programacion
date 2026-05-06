@@ -2,23 +2,22 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from Clases.Pestaña import Pestana
-import time
-
+from Clases.Historial import Historial
+from Clases.Favoritos import Favoritos
 
 class MiNavegador:
     def __init__(self, root):
         self.root = root
         self.root.title("Navegador")
-
-        self.color_bg_actual = "white"
-        self.color_fg_actual = "black"
-        
         self.root.attributes('-alpha', 0.0)
         self.root.geometry("0x0+0+0")
+        self.color_bg_actual = "white"
+        self.color_fg_actual = "black"
         
         self.app = tk.Toplevel(self.root)
         self.app.geometry("800x600")
         self.app.minsize(400, 300)
+
         
         # quita los bordes de cerrar, minimizar y maximizar
         self.app.overrideredirect(True)
@@ -26,15 +25,18 @@ class MiNavegador:
         self.offset_y = 0
         self.root.bind("<Unmap>", self.al_minimizar_desde_barra)
         self.root.bind("<Map>", self.al_restaurar_desde_barra)
+        self.favoritos = Favoritos()
         self.crear_barra_titulo()
         self.crear_barra_navegacion()
         self.crear_barra_estado()
         self.crear_area_contenido()
+        self.actualizar_menu_historial()
+        self.actualizar_menu_fav()
 
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
         self.barra_titulo.pack(fill="x", side="top")
-        lbl_titulo = tk.Label(self.barra_titulo, text=" navegador", 
+        lbl_titulo = tk.Label(self.barra_titulo, text="Super", 
                               bg="#2c3e50", fg="white", font=("Arial", 10, "bold"))
         lbl_titulo.pack(side="left", padx=10)
 
@@ -75,10 +77,22 @@ class MiNavegador:
         btn_nueva = tk.Button(self.frame_nav, text="+", width=3,command=self.nueva_pestana)
         btn_nueva.pack(side="right")
 
+        self.entrada_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
+        self.entrada_url.pack(side="left", fill="x", expand=True, padx=(10, 5))
+            
+        self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
+        self.btn_ir.pack(side="left", padx=(0, 10))
+        self.btn_estrella_fav = tk.Button(self.frame_nav, text="☆", command=self.guardar_en_fav, bg="#ffcc00")
+        self.btn_estrella_fav.pack(side="left", padx=5)
+        self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
+        self.validar_entrada()
+        
+        btn_nueva = tk.Button(self.frame_nav, text="+", width=3,command=self.nueva_pestana)
+        btn_nueva.pack(side="right", padx=5)
+
         btn_cerrar = tk.Button(self.frame_nav,text="✕",width=3,command=self.cerrar_pestana_actual)
         btn_cerrar.pack(side="right", padx=5)
         self.cambio_color(btn_cerrar,"red")
-
 
         self.btn_menu_color = tk.Menubutton(self.frame_nav, text="Colores",relief="raised", bg="#397daa")
         self.menu_colores = tk.Menu(self.btn_menu_color, tearoff=0)
@@ -112,8 +126,10 @@ class MiNavegador:
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
         self.color_fg_actual = color_fg
+
         pestana = self.pestana_actual()
         pestana.area_texto.config(bg=color_bg, fg=color_fg)
+
         self.estado.config(text="Esquema de color actualizado")
 
     def cambio_color(self, boton, nuevoColor, colorOriginal):
@@ -165,6 +181,7 @@ class MiNavegador:
         url = self.entrada_url.get().strip()
         pestana = self.pestana_actual()
         pestana.cargar_archivo(url, self.estado)
+        self.actualizar_menu_historial()
 
     def abrir_link(self, url):
         self.url_var.set(url)
@@ -184,10 +201,64 @@ class MiNavegador:
     def crear_area_contenido(self):
         self.notebook = ttk.Notebook(self.app)
         self.notebook.pack(fill="both", expand=True)
-
+        self.notebook.bind("<<NotebookTabChanged>>", lambda e: self.actualizar_menu_historial())
         self.pestanas = []
         self.nueva_pestana()
-    
+
+    def actualizar_menu_historial(self):
+        #limpiar el menu visual
+        self.menu_historial.delete(0, tk.END)
+        
+        #obbtener el historial de la pestaña activa
+        pestana = self.pestana_actual()
+        entradas = pestana.historial.obtener_historial()
+        
+        if not entradas:
+            self.menu_historial.add_command(label="Historial vacio", state="disabled")
+        else:
+            for url, titulo in reversed(entradas):
+                display_url = f"{url[:35]}..." if len(url) > 35 else url
+                self.menu_historial.add_command(
+                    label=f"{titulo} - {display_url}", command=lambda u=url: self.cargar_desde_historial(u))
+
+    def cargar_desde_historial(self, url):
+        self.url_var.set(url)
+        self.cargar_archivo()
+
+    def guardar_en_fav(self):
+        url = self.url_var.get().strip()
+        if not url:
+            return
+            
+        pestana = self.pestana_actual()
+        titulo = pestana.obtener_nombre_archivo(url)
+        
+        if self.favoritos.agregar(url, titulo):
+            self.estado.config(text="agregado a favoritos")
+            self.actualizar_menu_fav()
+        else:
+            self.estado.config(text="ya esta en favoritos")
+
+    def actualizar_menu_fav(self):
+        self.menu_fav.delete(0, tk.END)
+        lista = self.favoritos.obtener_favoritos()
+        
+        if not lista:
+            self.menu_fav.add_command(label="no hay favoritos", state="disabled")
+        else:
+            for url, titulo in lista:
+                self.menu_fav.add_command(label=f" {titulo if titulo else url}",command=lambda u=url: self.cargar_desde_fav(u))
+                self.menu_fav.add_command(label=f"eliminar",command=lambda u=url: self.eliminar_fav(u))
+                self.menu_fav.add_separator()
+    def eliminar_fav(self, url):
+        self.favoritos.eliminar(url)
+        self.actualizar_menu_fav()
+        self.estado.config(text="favorito eliminado")
+    def cargar_desde_fav(self, url):
+        self.url_var.set(url)
+        self.cargar_archivo()
+     
+
     def nueva_pestana(self):
         pestana = Pestana(self.notebook, self.abrir_link, 
                       bg=self.color_bg_actual, 
@@ -207,3 +278,8 @@ class MiNavegador:
 
         pestana.cerrar()
         self.pestanas.pop(indice)
+
+    def abrir_link(self, url):
+        self.url_var.set(url)
+        self.nueva_pestana()
+        self.cargar_archivo()
