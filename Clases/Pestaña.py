@@ -34,14 +34,7 @@ class Pestana:
 
 
     def cargar_archivo(self, url):
-        if not url.startswith("file:///") or not url.endswith((".html", ".htm")):
-            messagebox.showerror(
-                "Error",
-                "Solo se permiten archivos locales con extensión .html o .htm"
-            )
-            self.estado_var.set("Error")
-            return
-
+        
         self.estado_var.set("Cargando...")
         self.text_widget.delete("1.0", tk.END)
 

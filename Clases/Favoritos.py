@@ -1,6 +1,7 @@
 class Favoritos:
     def __init__(self):
         self.lista = []
+        
     def agregar(self, url, titulo):
         if not any(f[0] == url for f in self.lista):
             self.lista.append((url,titulo))

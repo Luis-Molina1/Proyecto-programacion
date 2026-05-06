@@ -100,6 +100,22 @@ class MiNavegador:
         self.btn_menu_color["menu"] = self.menu_colores
         self.btn_menu_color.pack(side="right", padx=10)
 
+        
+        self.btn_menu_principal = tk.Menubutton(
+            self.frame_nav,
+            text="Menu",
+            bg="#5d98d3",
+            relief=tk.RAISED
+        )
+
+        self.menu_principal = tk.Menu(self.btn_menu_principal, tearoff=0, bd=1)
+        self.btn_menu_principal["menu"] = self.menu_principal
+
+        self.menu_fav = tk.Menu(self.menu_principal, tearoff=0)
+        self.menu_principal.add_cascade(label="Favoritos", menu=self.menu_fav)
+
+        self.btn_menu_principal.pack(side=tk.LEFT, padx=5)
+
         # boton recargar
         self.btn_refresh = tk.Button(self.frame_nav, text="recargar", command=self.ejecutar_refresh)
         self.btn_refresh.pack(side="right", padx=5)
@@ -109,15 +125,16 @@ class MiNavegador:
         self.btn_refresh.config(state="disabled")
         self.app.config(cursor="watch")
         self.app.update_idletasks()
-        self.root.after(2000, self.finalizar_refresh)
+        self.root.after(1000, self.finalizar_refresh)
+
 
     def finalizar_refresh(self):
-        self.cargar_archivo()
-        self.estado.config(text="pagina actualizada", fg="black")
+        self.recargar_pestana()
+        self.estado.config(text="Página actualizada", fg="black")
         self.btn_refresh.config(state="normal")
         self.app.config(cursor="")
         self.root.after(2000, lambda: self.estado.config(text="Listo"))
-      
+
 
     def cambiar_color_fondo(self, bg, fg):
         self.color_bg_actual = bg
@@ -229,38 +246,62 @@ class MiNavegador:
         self.url_var.set(url)
         self.cargar_archivo()
 
+
     def guardar_en_fav(self):
         pestana = self.obtener_pestana_actual()
         if not pestana:
             return
-        
-    
+
         url = pestana.obtener_url()
+        if not url:
+            self.estado.config(text="No hay URL para guardar")
+            return
+
         titulo = pestana.obtener_nombre_archivo(url)
-        
+
         if self.favoritos.agregar(url, titulo):
-            self.favoritos.append(url)
-            self.estado.config(text="agregado a favoritos")
+            self.estado.config(text="Agregado a favoritos ★")
             self.actualizar_menu_fav()
         else:
-            self.estado.config(text="ya esta en favoritos")
+            self.estado.config(text="Ya existe en favoritos")
+        self.actualizar_menu_fav()
+
+
+
 
     def actualizar_menu_fav(self):
+        # Limpiar el menú de favoritos
         self.menu_fav.delete(0, tk.END)
-        lista = self.favoritos.obtener_favoritos()
-        
-        if not lista:
-            self.menu_fav.add_command(label="no hay favoritos", state="disabled")
-        else:
-            for url, titulo in lista:
-                self.menu_fav.add_command(label=f" {titulo if titulo else url}",command=lambda u=url: self.cargar_desde_fav(u))
-                self.menu_fav.add_command(label=f"eliminar",command=lambda u=url: self.eliminar_fav(u))
-                self.menu_fav.add_separator()
+
+        favoritos = self.favoritos.obtener_favoritos()
+
+        if not favoritos:
+            self.menu_fav.add_command(
+                label="No hay favoritos",
+                state="disabled"
+            )
+            return
+
+        for url, titulo in favoritos:
+            self.menu_fav.add_command(
+                label=titulo if titulo else url,
+                command=lambda u=url: self.cargar_desde_fav(u)
+            )
+
+        self.menu_fav.add_separator()
+        self.menu_fav.add_command(
+            label="Eliminar favorito actual",
+            command=self.eliminar_favorito_actual
+        )
+
+
+
 
     def eliminar_fav(self, url):
         self.favoritos.eliminar(url)
         self.actualizar_menu_fav()
-        self.estado.config(text="favorito eliminado")
+        self.estado.config(text="Favorito eliminado")
+
     def cargar_desde_fav(self, url):
         self.url_var.set(url)
         self.cargar_archivo()
