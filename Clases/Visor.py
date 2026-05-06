@@ -6,8 +6,11 @@ from html.parser import HTMLParser
 class VisorHTML(HTMLParser):
     def __init__(self, text_widget, on_link_click=None):
         super().__init__()
+        
+        
         self.text_widget = text_widget
         self.on_link_click = on_link_click
+        
         self.estilos_activos = []
         self.link_stack = []
 
