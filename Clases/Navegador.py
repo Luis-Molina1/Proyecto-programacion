@@ -74,8 +74,8 @@ class MiNavegador:
                 
             self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
             self.btn_ir.pack(side="left", padx=(0, 10))
-            self.btn_fav = tk.Button(self.frame_nav, text="fav", command=self.guardar_en_fav)
-            self.btn_fav.pack(side="left", padx=(0, 10))
+            self.btn_estrella_fav = tk.Button(self.frame_nav, text="añadir", command=self.guardar_en_fav, bg="#ffcc00")
+            self.btn_estrella_fav.pack(side="left", padx=5)
             self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
             self.validar_entrada()
             
@@ -87,10 +87,9 @@ class MiNavegador:
             self.cambio_color(btn_cerrar,"red")
 
             self.btn_menu_principal = tk.Menubutton(self.frame_nav, text="Menu", bg="#5d98d3")
-            self.menu_principal = tk.Menu(self.btn_menu_principal, tearoff=0)
+            self.menu_principal = tk.Menu(self.btn_menu_principal, tearoff=0,bd=1)
             self.btn_menu_principal["menu"] = self.menu_principal
-            
-            self.menu_colores = tk.Menu(self.menu_principal, tearoff=0)
+            self.menu_colores = tk.Menu(self.menu_principal, tearoff=0,bd=1)
             self.menu_colores.add_command(label="Color Blanco", command=lambda: self.cambiar_color_fondo("white", "black"))
             self.menu_colores.add_command(label="Color Beige", command=lambda: self.cambiar_color_fondo("#f4ecd8", "#5b4636"))
             self.menu_colores.add_command(label="Color Gris", command=lambda: self.cambiar_color_fondo("#A9A9A9", "black"))
@@ -99,10 +98,11 @@ class MiNavegador:
             self.menu_principal.add_cascade(label="Temas de Color", menu=self.menu_colores)
             self.menu_historial = tk.Menu(self.menu_principal, tearoff=0)
             self.menu_principal.add_cascade(label="Historial", menu=self.menu_historial)
-            self.btn_menu_principal.pack(side="right", padx=10)
-            self.menu_fav = tk.Menu(self.menu_principal, tearoff=0)
-            self.menu_principal.add_cascade(label="fav", menu=self.menu_fav)
-        
+            self.btn_menu_principal.pack(side="right", padx=10) 
+            self.btn_menu_fav = tk.Menubutton(self.frame_nav, text="Favoritos", bg="#5d98d3",bd=1)
+            self.menu_fav = tk.Menu(self.btn_menu_fav, tearoff=0,bd=1)
+            self.btn_menu_fav["menu"] = self.menu_fav
+            self.btn_menu_fav.pack(side="right", padx=10)           
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
         self.color_fg_actual = color_fg
@@ -200,8 +200,40 @@ class MiNavegador:
     def cargar_desde_historial(self, url):
         self.url_var.set(url)
         self.cargar_archivo()
+
     def guardar_en_fav(self):
+        url = self.url_var.get().strip()
+        if not url:
+            return
+            
+        pestana = self.pestana_actual()
+        titulo = pestana.obtener_nombre_archivo(url)
         
+        if self.favoritos.agregar(url, titulo):
+            self.estado.config(text="agregado a favoritos")
+            self.actualizar_menu_fav()
+        else:
+            self.estado.config(text="ya esta en favoritos")
+
+    def actualizar_menu_fav(self):
+        self.menu_fav.delete(0, tk.END)
+        lista = self.favoritos.obtener_favoritos()
+        
+        if not lista:
+            self.menu_fav.add_command(label="no hay favoritos", state="disabled")
+        else:
+            for url, titulo in lista:
+                self.menu_fav.add_command(label=f" {titulo if titulo else url}",command=lambda u=url: self.cargar_desde_fav(u))
+                self.menu_fav.add_command(label=f"eliminar",command=lambda u=url: self.eliminar_fav(u))
+                self.menu_fav.add_separator()
+    def eliminar_fav(self, url):
+        self.favoritos.eliminar(url)
+        self.actualizar_menu_fav()
+        self.estado.config(text="favorito eliminado")
+    def cargar_desde_fav(self, url):
+        self.url_var.set(url)
+        self.cargar_archivo()
+     
 
     def nueva_pestana(self):
         pestana = Pestana(self.notebook, self.abrir_link, 
