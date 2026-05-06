@@ -74,7 +74,7 @@ class MiNavegador:
                 
             self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar_archivo)
             self.btn_ir.pack(side="left", padx=(0, 10))
-            self.btn_estrella_fav = tk.Button(self.frame_nav, text="añadir", command=self.guardar_en_fav, bg="#ffcc00")
+            self.btn_estrella_fav = tk.Button(self.frame_nav, text="☆", command=self.guardar_en_fav, bg="#ffcc00")
             self.btn_estrella_fav.pack(side="left", padx=5)
             self.entrada_url.insert(0, "file:///C:/ruta/tu_archivo.html")
             self.validar_entrada()
@@ -89,6 +89,8 @@ class MiNavegador:
             self.btn_menu_principal = tk.Menubutton(self.frame_nav, text="Menu", bg="#5d98d3")
             self.menu_principal = tk.Menu(self.btn_menu_principal, tearoff=0,bd=1)
             self.btn_menu_principal["menu"] = self.menu_principal
+            self.menu_fav = tk.Menu(self.menu_principal, tearoff=0)
+            self.menu_principal.add_cascade(label="Favoritos", menu=self.menu_fav)
             self.menu_colores = tk.Menu(self.menu_principal, tearoff=0,bd=1)
             self.menu_colores.add_command(label="Color Blanco", command=lambda: self.cambiar_color_fondo("white", "black"))
             self.menu_colores.add_command(label="Color Beige", command=lambda: self.cambiar_color_fondo("#f4ecd8", "#5b4636"))
@@ -99,10 +101,6 @@ class MiNavegador:
             self.menu_historial = tk.Menu(self.menu_principal, tearoff=0)
             self.menu_principal.add_cascade(label="Historial", menu=self.menu_historial)
             self.btn_menu_principal.pack(side="right", padx=10) 
-            self.btn_menu_fav = tk.Menubutton(self.frame_nav, text="Favoritos", bg="#5d98d3",bd=1)
-            self.menu_fav = tk.Menu(self.btn_menu_fav, tearoff=0,bd=1)
-            self.btn_menu_fav["menu"] = self.menu_fav
-            self.btn_menu_fav.pack(side="right", padx=10)           
     def cambiar_color_fondo(self, color_bg, color_fg):
         self.color_bg_actual = color_bg
         self.color_fg_actual = color_fg
