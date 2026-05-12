@@ -1,19 +1,21 @@
 
 import http.client
-import re
 import time
+import urllib.parse
 
 class ClienteHTTP:
-    def coneccion(self, url, segundos_retraso=3):
-        match = re.search(r"(https?)://([^/]+)(.*)", url)
-        if not match:
+    def obtener_contenido(self, url, segundos_retraso=3):
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
             print("URL inválida")
-            return
-        protocol, dominio, ruta = match.groups()
-        
-        if not ruta:
-            ruta = "/"
-            
+            return None
+
+        protocol = parsed.scheme
+        dominio = parsed.netloc
+        ruta = parsed.path or "/"
+        if parsed.query:
+            ruta += "?" + parsed.query
+
         if protocol == "https":
             port = 443
             conn = http.client.HTTPSConnection(dominio, port, timeout=10)
@@ -26,21 +28,31 @@ class ClienteHTTP:
         if segundos_retraso > 0:
             print(f"Esperando {segundos_retraso} segundos...")
             time.sleep(segundos_retraso)
-            
+
         try:
             conn.request("GET", ruta)
             respuesta = conn.getresponse()
-            
-            print(f"Status: {respuesta.status} {respuesta.reason}")
-            print(respuesta.read().decode('utf-8', 'replace') )
+            contenido = respuesta.read().decode('utf-8', 'replace')
+            return respuesta.status, respuesta.reason, contenido
         except Exception as e:
             print(f"Error: {e}")
+            return None
         finally:
             conn.close()
-"""if __name__ == "__main__":
+    def coneccion(self, url, segundos_retraso=3):
+        resultado = self.obtener_contenido(url, segundos_retraso)
+        if resultado is None:
+            return None
+
+        status, reason, contenido = resultado
+        print(f"Status: {status} {reason}")
+        print(contenido)
+        return contenido
+
+
+if __name__ == "__main__":
     cliente = ClienteHTTP()
     
     cliente.coneccion("https://icc.utalca.cl")
     
     print("\nPrueba terminada.")
-"""

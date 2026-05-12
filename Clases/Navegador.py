@@ -1,6 +1,8 @@
+import os
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from urllib.parse import urljoin, urlparse
 from Clases.Pestaña import Pestana
 from Clases.Historial import Historial
 from Clases.Favoritos import Favoritos
@@ -111,8 +113,11 @@ class MiNavegador:
         self.menu_principal = tk.Menu(self.btn_menu_principal, tearoff=0, bd=1)
         self.btn_menu_principal["menu"] = self.menu_principal
 
-        self.menu_fav = tk.Menu(self.menu_principal, tearoff=0)
-        self.menu_principal.add_cascade(label="Favoritos", menu=self.menu_fav)
+        self.menu_fav_principal = tk.Menu(self.menu_principal, tearoff=0)
+        self.menu_principal.add_cascade(label="Favoritos", menu=self.menu_fav_principal)
+
+        self.menu_hist_principal = tk.Menu(self.menu_principal, tearoff=0)
+        self.menu_principal.add_cascade(label="Historial", menu=self.menu_hist_principal)
 
         self.btn_menu_principal.pack(side=tk.LEFT, padx=5)
 
@@ -194,8 +199,21 @@ class MiNavegador:
 
 
     def abrir_link(self, url):
-        self.url_var.set(url)
-        self.cargar_archivo()
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            return
+
+        if not urlparse(url).scheme:
+            current_url = pestana.obtener_url()
+            if current_url.startswith("http"):
+                url = urljoin(current_url, url)
+            elif current_url.startswith("file:///"):
+                ruta_base = os.path.dirname(current_url.replace("file:///", ""))
+                ruta_rel = os.path.normpath(os.path.join(ruta_base, url))
+                url = f"file:///{ruta_rel.replace('\\', '/') }"
+
+        pestana.url_var.set(url)
+        pestana.cargar()
 
     def confirmar_cierre(self):
         if messagebox.askokcancel("Confirmar", "¿Seguro que quieres cerrar el navegador?"):
@@ -211,40 +229,53 @@ class MiNavegador:
     def crear_area_contenido(self):
         self.notebook = ttk.Notebook(self.app)
         self.notebook.pack(fill="both", expand=True)
+        self.notebook.bind("<<NotebookTabChanged>>", lambda e: (self.actualizar_menu_historial(), self.actualizar_menu_fav()))
         
         self.pestanas = []
         self.nueva_pestana()
 
     def actualizar_menu_historial(self):
         
-        if not hasattr(self, "menu_historial"):
-                return
+        menus = [self.menu_historial]
+        if hasattr(self, "menu_hist_principal"):
+            menus.append(self.menu_hist_principal)
 
-        #limpiar el menu visual
-        self.menu_historial.delete(0, tk.END)
+        for menu in menus:
+            menu.delete(0, tk.END)
         
         #obbtener el historial de la pestaña activa
         pestana = self.pestana_actual()
         entradas = pestana.historial.obtener_historial()
         
         if not entradas:
-            self.menu_historial.add_command(label="Historial vacio", state="disabled")
+            for menu in menus:
+                menu.add_command(label="Historial vacio", state="disabled")
         else:
-            for url, titulo in reversed(entradas):
-                display_url = f"{url[:35]}..." if len(url) > 35 else url
-                self.menu_historial.add_command(
-                    label=f"{titulo} - {display_url}", command=lambda u=url: self.cargar_desde_historial(u))
+            for menu in menus:
+                for url, titulo in reversed(entradas):
+                    display_url = f"{url[:35]}..." if len(url) > 35 else url
+                    menu.add_command(
+                        label=f"{titulo} - {display_url}", command=lambda u=url: self.cargar_desde_historial(u))
 
     
     
     def recargar_pestana(self):
         pestana = self.obtener_pestana_actual()
         if pestana:
-            pestana.cargar()
+            pestana.recargar()
 
     def cargar_desde_historial(self, url):
-        self.url_var.set(url)
-        self.cargar_archivo()
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            return
+        pestana.url_var.set(url)
+        pestana.cargar()
+
+
+    def cargar_archivo(self):
+        pestana = self.obtener_pestana_actual()
+        if pestana:
+            pestana.cargar()
 
 
     def guardar_en_fav(self):
@@ -259,11 +290,15 @@ class MiNavegador:
 
         titulo = pestana.obtener_nombre_archivo(url)
 
-        if self.favoritos.agregar(url, titulo):
-            self.estado.config(text="Agregado a favoritos ★")
-            self.actualizar_menu_fav()
+        if self.favoritos.contiene(url):
+            self.favoritos.eliminar(url)
+            self.btn_estrella_fav.config(text="☆")
+            self.estado.config(text="Favorito eliminado")
         else:
-            self.estado.config(text="Ya existe en favoritos")
+            self.favoritos.agregar(url, titulo)
+            self.btn_estrella_fav.config(text="★")
+            self.estado.config(text="Agregado a favoritos ★")
+
         self.actualizar_menu_fav()
 
 
@@ -271,41 +306,58 @@ class MiNavegador:
 
     def actualizar_menu_fav(self):
         # Limpiar el menú de favoritos
-        self.menu_fav.delete(0, tk.END)
+        menus = [self.menu_fav]
+        if hasattr(self, "menu_fav_principal"):
+            menus.append(self.menu_fav_principal)
+
+        for menu in menus:
+            menu.delete(0, tk.END)
 
         favoritos = self.favoritos.obtener_favoritos()
 
         if not favoritos:
-            self.menu_fav.add_command(
-                label="No hay favoritos",
-                state="disabled"
-            )
+            for menu in menus:
+                menu.add_command(
+                    label="No hay favoritos",
+                    state="disabled"
+                )
             return
 
         for url, titulo in favoritos:
-            self.menu_fav.add_command(
-                label=titulo if titulo else url,
-                command=lambda u=url: self.cargar_desde_fav(u)
+            for menu in menus:
+                menu.add_command(
+                    label=titulo if titulo else url,
+                    command=lambda u=url: self.cargar_desde_fav(u)
+                )
+
+        for menu in menus:
+            menu.add_separator()
+            menu.add_command(
+                label="Eliminar favorito actual",
+                command=self.eliminar_favorito_actual
             )
 
-        self.menu_fav.add_separator()
-        self.menu_fav.add_command(
-            label="Eliminar favorito actual",
-            command=self.eliminar_favorito_actual
-        )
 
 
 
-
-    def eliminar_fav(self, url):
+    def cargar_desde_fav(self, url):
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            return
+        pestana.url_var.set(url)
+        pestana.cargar()
+     
+    def eliminar_favorito_actual(self):
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            return
+        url = pestana.obtener_url()
+        if not url:
+            self.estado.config(text="No hay URL actual para eliminar")
+            return
         self.favoritos.eliminar(url)
         self.actualizar_menu_fav()
         self.estado.config(text="Favorito eliminado")
-
-    def cargar_desde_fav(self, url):
-        self.url_var.set(url)
-        self.cargar_archivo()
-     
 
     def nueva_pestana(self):
         
@@ -313,7 +365,8 @@ class MiNavegador:
             self.notebook,
             self.abrir_link,
             bg=self.color_bg_actual,
-            fg=self.color_fg_actual
+            fg=self.color_fg_actual,
+            on_historial_update=self.actualizar_menu_historial
         )
 
         self.pestanas.append(pestana)
@@ -337,8 +390,3 @@ class MiNavegador:
 
         pestana.cerrar()
         self.pestanas.pop(indice)
-
-    def abrir_link(self, url):
-        self.url_var.set(url)
-        self.nueva_pestana()
-        self.cargar_archivo()

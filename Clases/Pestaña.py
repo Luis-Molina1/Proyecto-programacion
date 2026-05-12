@@ -1,16 +1,19 @@
 import tkinter as tk
 import os
 import sys
+import urllib.parse
 from tkinter import messagebox
 from Clases.Visor import VisorHTML
 from Clases.Historial import Historial
+from Clases.ClienteHTTP import ClienteHTTP
 
 
 class Pestana:
-    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black"):
+    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None):
         self.notebook = notebook
         self.frame = tk.Frame(notebook)
         self.abrir_link = abrir_link
+        self.on_historial_update = on_historial_update
         self.historial = Historial()
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
@@ -34,9 +37,32 @@ class Pestana:
 
 
     def cargar_archivo(self, url):
-        
         self.estado_var.set("Cargando...")
         self.text_widget.delete("1.0", tk.END)
+        self.visor.reset()
+
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme in ("http", "https"):
+            resultado = ClienteHTTP().obtener_contenido(url, segundos_retraso=0)
+            if resultado is None:
+                self.text_widget.insert(tk.END, f"No se pudo cargar la página:\n{url}")
+                self.estado_var.set("Error")
+                return
+
+            _, _, contenido = resultado
+            self.visor.feed(contenido)
+
+            nombre = self.obtener_nombre_archivo(url)
+            self.notebook.tab(self.frame, text=nombre)
+
+            if hasattr(self, "historial"):
+                self.historial.agregar(url, nombre)
+
+            if self.on_historial_update:
+                self.on_historial_update()
+
+            self.estado_var.set("Completado")
+            return
 
         ruta = url.replace("file:///", "")
         if not sys.platform.startswith("win"):
@@ -64,6 +90,9 @@ class Pestana:
             if hasattr(self, "historial"):
                 self.historial.agregar(url, nombre)
 
+            if self.on_historial_update:
+                self.on_historial_update()
+
             self.estado_var.set("Completado")
 
         except Exception as e:
@@ -77,10 +106,15 @@ class Pestana:
     
     
     def obtener_nombre_archivo(self, url):
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme in ("http", "https"):
+            nombre = os.path.basename(parsed.path)
+            if nombre:
+                return nombre.replace(".html", "").replace(".htm", "")
+            return parsed.netloc
+
         nombre = os.path.basename(url.replace("file:///", ""))
         return nombre.replace(".html", "").replace(".htm", "")
-    
-        
 
     def crear_barra_local(self):
         self.frame_nav = tk.Frame(self.frame)
@@ -120,6 +154,17 @@ class Pestana:
             self.estado_var.set("URL vacía")
             return
 
+        self.cargar_archivo(url)
+
+
+
+    def recargar(self):
+        if not self.historial.entradas:
+            self.estado_var.set("No hay historial para recargar")
+            return
+
+        url = self.historial.entradas[-1][0]
+        self.url_var.set(url)
         self.cargar_archivo(url)
 
 
