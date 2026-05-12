@@ -49,9 +49,9 @@ class MiNavegador:
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
         self.barra_titulo.pack(fill="x", side="top")
-        lbl_titulo = tk.Label(self.barra_titulo, text="Super", 
+        self.lbl_titulo = tk.Label(self.barra_titulo, text="Super", 
                               bg="#2c3e50", fg="white", font=("Arial", 10, "bold"))
-        lbl_titulo.pack(side="left", padx=10)
+        self.lbl_titulo.pack(side="left", padx=10)
 
         # para arrastrar la ventana
         self.barra_titulo.bind("<Button-1>", self.get_pos)
@@ -145,6 +145,12 @@ class MiNavegador:
         self.color_bg_actual = bg
         self.color_fg_actual = fg
 
+        # para que cambie la barra del titulo de color tabien
+        self.barra_titulo.config(bg=bg)
+        if hasattr(self, "lbl_titulo"):
+            self.lbl_titulo.config(bg=bg, fg=fg)
+
+        self.frame_nav.config(bg=bg)
         # aplicar a todas las pestañas
         for pestana in self.pestanas:
             pestana.aplicar_color(bg, fg)
