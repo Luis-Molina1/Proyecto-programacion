@@ -388,11 +388,17 @@ class MiNavegador:
         return self.pestanas[indice]
 
     def cerrar_pestana_actual(self):
-        if len(self.pestanas) == 1:
-            return  # evita cerrar la última pestaña
-
-        indice = self.notebook.index(self.notebook.select())
-        pestana = self.pestanas[indice]
-
+        indice_seleccion = self.notebook.index(self.notebook.select())
+        indice_mas_reciente = len(self.pestanas) - 1
+        # si hay solo una no se cierra
+        if len(self.pestanas) <= 1:
+            self.estado.config(text="No se puede cerrar")
+            return
+        
+        if indice_seleccion == indice_mas_reciente:
+            self.estado.config(text="No se puede cerrar la mas reciente")
+            return
+        
+        pestana = self.pestanas.pop(indice_seleccion)
         pestana.cerrar()
-        self.pestanas.pop(indice)
+        self.estado.config(text="Pestaña cerrada")
