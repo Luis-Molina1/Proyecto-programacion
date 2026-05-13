@@ -51,7 +51,9 @@ class Pestana:
                 return
 
             _, _, contenido = resultado
+            estatus, razon, contenido = resultado
             self.visor.feed(contenido)
+
 
             match_dominio = re.search(r"(https?)://([^/]+)", url)
             nombre = match_dominio.group(2) if match_dominio else url
@@ -61,7 +63,7 @@ class Pestana:
                 if titulo_extraido: # Si no está vacío
                     nombre = titulo_extraido
             if len(nombre) > 25:
-                nombre = nombre[:22] + "..."
+                nombre = nombre[:25] + "..."
             self.notebook.tab(self.frame, text=nombre)
 
             if hasattr(self, "historial"):
@@ -69,10 +71,9 @@ class Pestana:
 
             if self.on_historial_update:
                 self.on_historial_update()
-
-            self.estado_var.set("Completado")
+            self.estado_var.set(f"{estatus} {razon}")
             return
-
+        
         ruta = url.replace("file:///", "")
         if not sys.platform.startswith("win"):
             ruta = "/" + ruta
@@ -139,8 +140,15 @@ class Pestana:
 
         self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar)
         self.btn_ir.pack(side="left", padx=5)
+        self.url_var.trace_add("write", self.validar_entrada)
+        self.validar_entrada()
 
-
+    def validar_entrada(self, *args):
+            #si hay texto se activa el boton
+            if self.url_var.get().strip():
+                self.btn_ir.config(state="normal")
+            else:
+                self.btn_ir.config(state="disabled")    
 
     def crear_barra_estado(self):
         self.estado_var = tk.StringVar(value="Listo")
