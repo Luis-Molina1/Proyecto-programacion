@@ -1,7 +1,8 @@
 
 import tkinter as tk
 from html.parser import HTMLParser
-
+from urllib.request import urlopen
+import urllib.parse
 
 class VisorHTML(HTMLParser):
     def __init__(self, text_widget, on_link_click=None):
@@ -13,8 +14,9 @@ class VisorHTML(HTMLParser):
         
         self.estilos_activos = []
         self.link_stack = []
-
         self.link_index = 0
+        # guardar referencia de imagen
+        self.imagenes_referencia = []
 
         # Estilos de texto
         self.text_widget.tag_configure("h1", font=("Arial", 16, "bold"))
@@ -43,6 +45,12 @@ class VisorHTML(HTMLParser):
 
         elif tag in ("p", "br", "li"):
             self.text_widget.insert(tk.END, "\n")
+
+        elif tag == "img":
+            dic_attrs = dict(attrs)
+            src = dic_attrs.get("src")
+            if src:
+                self._insertar_imagen(src)
 
     def handle_endtag(self, tag):
         if tag in self.estilos_activos:
@@ -86,3 +94,27 @@ class VisorHTML(HTMLParser):
         self.text_widget.tag_bind(tag_link,"<Leave>",lambda e, t=tag_link: (self.text_widget.tag_configure(t, foreground="#0066cc"),self.text_widget.config(cursor=""))
         )
 
+    def _insertar_imagen(self, url_img):
+        try:
+            # ve si es imagen de internet o local
+            parsed = urllib.parse.urlparse(url_img)
+            # si es internet
+            if parsed.scheme in ("http", "https"):
+                with urlopen(url_img) as response:
+                    raw_data = response.read()
+                tk_img = tk.PhotoImage(data=raw_data)
+            # si es local    
+            else:
+                ruta_limpia = url_img.replace("file:///", "")
+                tk_img = tk.PhotoImage(file=ruta_limpia)
+
+            self.imagenes_referencia.append(tk_img)
+            self.text_widget.image_create(tk.END, image=tk_img)
+            self.text_widget.insert(tk.END, "\n")
+
+        except Exception as e:
+            self.text_widget.insert(tk.END, f"[Error al cargar imagen: {url_img}]\n")
+    
+    def reset(self):
+        super().reset()
+        self.imagenes_referencia = []
