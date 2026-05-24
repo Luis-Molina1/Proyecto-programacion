@@ -35,7 +35,9 @@ class ClienteHTTP:
             time.sleep(segundos_retraso)
 
         try:
-            conn.request("GET", ruta)
+            headers = {
+                "Host": dominio,"User-Agent": "Navegador"}
+            conn.request("GET", ruta, headers=headers)
             respuesta = conn.getresponse()
 
             # redirecciones

@@ -1,4 +1,5 @@
 import re
+import html
 import tkinter as tk
 import os
 import sys
@@ -62,8 +63,8 @@ class Pestana:
             nombre = match_dominio.group(2) if match_dominio else url
             match_titulo = re.search(r"<title>(.*?)</title>", contenido, re.IGNORECASE | re.DOTALL)
             if match_titulo:
-                titulo_extraido = match_titulo.group(1).strip()
-                if titulo_extraido: # Si no está vacío
+                titulo_extraido = html.unescape(match_titulo.group(1).strip())
+                if titulo_extraido:
                     nombre = titulo_extraido
             if len(nombre) > 25:
                 nombre = nombre[:25] + "..."
