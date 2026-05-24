@@ -3,14 +3,15 @@ import tkinter as tk
 from html.parser import HTMLParser
 from urllib.request import urlopen
 import urllib.parse
+from urllib.parse import urljoin
 
 class VisorHTML(HTMLParser):
-    def __init__(self, text_widget, on_link_click=None):
+    def __init__(self, text_widget, on_link_click=None, pestana=None):
         super().__init__()
-        
         
         self.text_widget = text_widget
         self.on_link_click = on_link_click
+        self.pestana = pestana
         
         self.estilos_activos = []
         self.link_stack = []
@@ -96,11 +97,16 @@ class VisorHTML(HTMLParser):
 
     def _insertar_imagen(self, url_img):
         try:
+            if self.pestana:
+                url_base = self.pestana.url_var.get().strip()
+            else:
+                url_base = ""
+            url_completa = urljoin(url_base, url_img)
             # ve si es imagen de internet o local
-            parsed = urllib.parse.urlparse(url_img)
+            parsed = urllib.parse.urlparse(url_completa)
             # si es internet
             if parsed.scheme in ("http", "https"):
-                with urlopen(url_img) as response:
+                with urlopen(url_completa) as response:
                     raw_data = response.read()
                 tk_img = tk.PhotoImage(data=raw_data)
             # si es local    
@@ -113,6 +119,7 @@ class VisorHTML(HTMLParser):
             self.text_widget.insert(tk.END, "\n")
 
         except Exception as e:
+            print(f"Error al cargar imagen {url_img}: {e}")
             self.text_widget.insert(tk.END, f"[Error al cargar imagen: {url_img}]\n")
     
     def reset(self):

@@ -19,23 +19,16 @@ class Pestana:
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
         
-
         self.abrir_link = abrir_link
-
         self.notebook.add(self.frame, text=titulo)
         self.notebook.select(self.frame)
-
         self.crear_barra_local()
         self.crear_contenido()
         self.crear_barra_estado()
         self.aplicar_color(bg, fg)
-
-
     
     def obtener_url(self):
         return self.url_var.get()
-
-
 
     def cargar_archivo(self, url):
         self.estado_var.set("Cargando...")
@@ -45,6 +38,16 @@ class Pestana:
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme in ("http", "https"):
             resultado = ClienteHTTP().obtener_contenido(url, segundos_retraso=0)
+            
+            # si fallo la conexion https intentamos por http
+            if resultado is None and url.startswith("https://"):
+                url_fallback = url.replace("https://", "http://", 1)
+                resultado = ClienteHTTP().obtener_contenido(url_fallback, segundos_retraso=0)
+                if resultado is not None:
+                    url = url_fallback
+                    # actualiza la barra de direcciones con http
+                    self.url_var.set(url)
+
             if resultado is None:
                 self.text_widget.insert(tk.END, f"No se pudo cargar la página:\n{url}")
                 self.estado_var.set("Error")
@@ -171,6 +174,13 @@ class Pestana:
             self.estado_var.set("URL vacía")
             return
 
+        # si no tiene http, https, file, al inicio y si un nombre.algo lo buscara
+        parsed = urllib.parse.urlparse(url)
+        if not parsed.scheme and not os.path.isabs(url):
+            if "." in url and " " not in url:
+                url = "https://" + url
+                self.url_var.set(url)
+
         self.cargar_archivo(url)
 
 
@@ -202,7 +212,8 @@ class Pestana:
 
         self.visor = VisorHTML(
             self.text_widget,
-            on_link_click=self.abrir_link
+            on_link_click=self.abrir_link,
+            pestana=self
         )
 
     

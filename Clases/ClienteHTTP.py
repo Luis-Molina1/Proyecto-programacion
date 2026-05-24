@@ -1,10 +1,14 @@
-
 import http.client
 import time
 import urllib.parse
+import ssl
 
 class ClienteHTTP:
-    def obtener_contenido(self, url, segundos_retraso=3):
+    def obtener_contenido(self, url, segundos_retraso=3, redirecciones=5):
+        if redirecciones == 0:
+            print("Error: Demasiadas redirecciones")
+            return None
+
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme not in ("http", "https") or not parsed.netloc:
             print("URL inválida")
@@ -18,7 +22,8 @@ class ClienteHTTP:
 
         if protocol == "https":
             port = 443
-            conn = http.client.HTTPSConnection(dominio, port, timeout=10)
+            context = ssl._create_unverified_context()
+            conn = http.client.HTTPSConnection(dominio, port, timeout=10, context=context)
         else:
             port = 80
             conn = http.client.HTTPConnection(dominio, port, timeout=10)
@@ -32,6 +37,15 @@ class ClienteHTTP:
         try:
             conn.request("GET", ruta)
             respuesta = conn.getresponse()
+
+            # redirecciones
+            if respuesta.status in (301, 302, 303, 307, 308):
+                nueva_url = respuesta.getheader('Location')
+                if nueva_url:
+                    nueva_url = urllib.parse.urljoin(url, nueva_url)
+                    print(f"Redirigiendo a: {nueva_url}")
+                    return self.obtener_contenido(nueva_url, segundos_retraso, redirecciones - 1)
+
             contenido = respuesta.read().decode('utf-8', 'replace')
             return respuesta.status, respuesta.reason, contenido
         except Exception as e:
@@ -39,6 +53,7 @@ class ClienteHTTP:
             return None
         finally:
             conn.close()
+
     def coneccion(self, url, segundos_retraso=3):
         resultado = self.obtener_contenido(url, segundos_retraso)
         if resultado is None:
@@ -48,11 +63,3 @@ class ClienteHTTP:
         print(f"Status: {status} {reason}")
         print(contenido)
         return contenido
-
-
-if __name__ == "__main__":
-    cliente = ClienteHTTP()
-    
-    cliente.coneccion("https://icc.utalca.cl")
-    
-    print("\nPrueba terminada.")
