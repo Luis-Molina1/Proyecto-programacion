@@ -11,11 +11,12 @@ from Clases.ClienteHTTP import ClienteHTTP
 
 
 class Pestana:
-    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None):
+    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None, on_navegacion=None):
         self.notebook = notebook
         self.frame = tk.Frame(notebook)
         self.abrir_link = abrir_link
         self.on_historial_update = on_historial_update
+        self.on_navegacion = on_navegacion
         self.historial = Historial()
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
@@ -76,6 +77,8 @@ class Pestana:
             if self.on_historial_update:
                 self.on_historial_update()
             self.estado_var.set(f"{estatus} {razon}")
+            if self.on_navegacion:
+                self.on_navegacion()
             return
         
         ruta = url.replace("file:///", "")
@@ -207,16 +210,22 @@ class Pestana:
     def crear_contenido(self):
         self.frame_contenido = tk.Frame(self.frame)
         self.frame_contenido.pack(fill="both", expand=True)
-
-        self.text_widget = tk.Text(self.frame_contenido, wrap="word")
+        self.barra_desplazamiento = tk.Scrollbar(self.frame_contenido, orient="vertical")
+        self.barra_desplazamiento.pack(side="right", fill="y")
+        self.text_widget = tk.Text(self.frame_contenido, wrap="word", yscrollcommand=lambda inicio, fin: self.auto_desplazamiento(self.barra_desplazamiento, inicio, fin))
+        self.barra_desplazamiento.config(command=self.text_widget.yview)    
         self.text_widget.pack(fill="both", expand=True)
-
         self.visor = VisorHTML(
             self.text_widget,
             on_link_click=self.abrir_link,
             pestana=self
         )
-
+    def auto_desplazamiento(self, barra, inicio, fin):
+        if float(inicio) <= 0.0 and float(fin) >= 1.0:
+            barra.config(width=0)
+        else:
+            barra.config(width=16)
+        barra.set(inicio, fin)
     
     def aplicar_color(self, bg, fg):
         # fondo de la pestaña

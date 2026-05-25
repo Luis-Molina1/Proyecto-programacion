@@ -28,6 +28,12 @@ class MiNavegador:
         self.root.bind("<Unmap>", self.al_minimizar_desde_barra)
         self.root.bind("<Map>", self.al_restaurar_desde_barra)
         self.favoritos = Favoritos()
+        self.app.bind("<Control-Tab>", self.siguiente_pestana)
+        self.app.bind("<Control-Shift-Tab>", self.pestana_anterior)
+        self.app.bind("<Control-w>", lambda e: self.cerrar_pestana_actual())
+        self.app.bind("<Control-z>", lambda e: self.nueva_pestana())
+        for i in range(1, 10):
+            self.app.bind(f"<Control-Key-{i}>", lambda e, idx=i-1: self.ir_a_pestana(idx))
         self.crear_barra_titulo()
         self.crear_barra_navegacion()
         self.crear_area_contenido()
@@ -235,7 +241,8 @@ class MiNavegador:
     def crear_area_contenido(self):
         self.notebook = ttk.Notebook(self.app)
         self.notebook.pack(fill="both", expand=True)
-        self.notebook.bind("<<NotebookTabChanged>>", lambda e: (self.actualizar_menu_historial(), self.actualizar_menu_fav()))
+        self.notebook.bind("<<NotebookTabChanged>>", lambda e: (self.actualizar_menu_historial(), self.actualizar_menu_fav(), self.actualizar_estrella()))
+
         
         self.pestanas = []
         self.nueva_pestana()
@@ -304,10 +311,18 @@ class MiNavegador:
             self.favoritos.agregar(url, titulo)
             self.btn_estrella_fav.config(text="★")
             self.estado.config(text="Agregado a favoritos ★")
-
+        self.actualizar_estrella()
         self.actualizar_menu_fav()
 
-
+    def actualizar_estrella(self):
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            return
+        url = pestana.obtener_url()
+        if self.favoritos.contiene(url):
+            self.btn_estrella_fav.config(text="★")
+        else:
+            self.btn_estrella_fav.config(text="☆")
 
 
     def actualizar_menu_fav(self):
@@ -335,13 +350,6 @@ class MiNavegador:
                     label=titulo if titulo else url,
                     command=lambda u=url: self.cargar_desde_fav(u)
                 )
-
-        for menu in menus:
-            menu.add_separator()
-            menu.add_command(
-                label="Eliminar favorito actual",
-                command=self.eliminar_favorito_actual
-            )
 
 
 
@@ -372,12 +380,31 @@ class MiNavegador:
             self.abrir_link,
             bg=self.color_bg_actual,
             fg=self.color_fg_actual,
-            on_historial_update=self.actualizar_menu_historial
+            on_historial_update=self.actualizar_menu_historial,
+            on_navegacion=self.actualizar_estrella
         )
 
         self.pestanas.append(pestana)
 
-     
+    def siguiente_pestana(self, event=None):
+        total = len(self.pestanas)
+        if total <=1:
+            return
+        actual = self.notebook.index(self.notebook.select())
+        siguiente = (actual + 1)%total
+        self.notebook.select(siguiente)
+
+    def pestana_anterior(self, event=None):
+        total = len(self.pestanas)
+        if total <=1:
+            return
+        actual = self.notebook.index(self.notebook.select())
+        anterior = (actual - 1)%total
+        self.notebook.select(anterior)
+
+    def ir_a_pestana(self, indice, event=None):
+        if indice < len(self.pestanas):
+            self.notebook.select(indice)   
     
     def obtener_pestana_actual(self):
         index = self.notebook.index(self.notebook.select())
