@@ -301,7 +301,8 @@ class MiNavegador:
             self.estado.config(text="No hay URL para guardar")
             return
 
-        titulo = pestana.obtener_nombre_archivo(url)
+        tab_text = self.notebook.tab(self.notebook.select(), "text")
+        titulo = tab_text if tab_text and tab_text != "Nueva pestaña" else pestana.obtener_nombre_archivo(url)
 
         if self.favoritos.contiene(url):
             self.favoritos.eliminar(url)
@@ -347,7 +348,7 @@ class MiNavegador:
         for url, titulo in favoritos:
             for menu in menus:
                 menu.add_command(
-                    label=titulo if titulo else url,
+                    label=url,
                     command=lambda u=url: self.cargar_desde_fav(u)
                 )
 
