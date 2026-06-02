@@ -18,14 +18,21 @@ class VisorHTML(HTMLParser):
         self.link_index = 0
         # guardar referencia de imagen
         self.imagenes_referencia = []
+        self.tags_a_ignorar = []
 
-        self.text_widget.tag_configure("h1", font=("Arial", 18, "bold"), spacing1=12, spacing3=6)
-        self.text_widget.tag_configure("h2", font=("Arial", 15, "bold"), spacing1=10, spacing3=5)
-        self.text_widget.tag_configure("h3", font=("Arial", 13, "bold"), spacing1=8, spacing3=4)
-        self.text_widget.tag_configure("b", font=("Arial", 12, "bold"))
+        self.text_widget.tag_configure("h1", font=("Arial", 25, "bold"), spacing1=12, spacing3=6)
+        self.text_widget.tag_configure("h2", font=("Arial", 20, "bold"), spacing1=10, spacing3=5)
+        self.text_widget.tag_configure("h3", font=("Arial", 18, "bold"), spacing1=8, spacing3=4)
+        self.text_widget.tag_configure("h4", font=("Arial", 15, "bold"), spacing1=8, spacing3=3)
+        self.text_widget.tag_configure("h5", font=("Arial", 12, "bold"), spacing1=8, spacing3=2)
+        self.text_widget.tag_configure("h6", font=("Arial", 10, "bold"), spacing1=8, spacing3=1)
+
         self.text_widget.tag_configure("i", font=("Arial", 12, "italic"))
         self.text_widget.tag_configure("p", font=("Arial", 12), spacing1=6, spacing3=6)
         self.text_widget.tag_configure("li", font=("Arial", 12), lmargin1=24, lmargin2=40, spacing1=3, spacing3=3)
+
+        self.text_widget.tag_configure("b", font=("Arial", 20, "bold"))
+        self.text_widget.tag_configure("strong", font=("Arial", 20, "bold"))
 
         self.text_widget.tag_configure("link", foreground="#0066cc", underline=True)
         self.text_widget.tag_configure("link_hover", foreground="#66b2ff", underline=True)
@@ -37,10 +44,14 @@ class VisorHTML(HTMLParser):
             self.text_widget.insert(tk.END, "\n")
 
     def handle_starttag(self, tag, attrs):
-        if tag in ("h1", "h2", "h3", "b", "i", "p", "li"):
+        if tag in ("script", "style", "head", "title"):
+            self.tags_a_ignorar.append(tag)
+            return
+
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "p", "li"):
             self.estilos_activos.append(tag)
 
-        if tag in ("h1", "h2", "h3", "p", "li"):
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "p", "li"):
             self.asegurar_nueva_linea()
 
         if tag == "li":
@@ -64,10 +75,15 @@ class VisorHTML(HTMLParser):
                 self._insertar_imagen(src)
 
     def handle_endtag(self, tag):
+        if tag in ("script", "style", "head", "title"):
+            if tag in self.tags_a_ignorar:
+                self.tags_a_ignorar.remove(tag)
+            return
+
         if tag in self.estilos_activos:
             self.estilos_activos.remove(tag)
 
-        if tag in ("h1", "h2", "h3", "p", "li"):
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "p", "li"):
             self.asegurar_nueva_linea()
 
         elif tag == "a":
@@ -76,6 +92,8 @@ class VisorHTML(HTMLParser):
             self.text_widget.insert(tk.END, " ")
 
     def handle_data(self, data):
+        if self.tags_a_ignorar:
+            return
         texto = data.strip()
         if not texto:
             return
@@ -129,3 +147,4 @@ class VisorHTML(HTMLParser):
     def reset(self):
         super().reset()
         self.imagenes_referencia = []
+        self.tags_a_ignorar = []
