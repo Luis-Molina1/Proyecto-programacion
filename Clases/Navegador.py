@@ -131,6 +131,12 @@ class MiNavegador:
         self.btn_refresh = tk.Button(self.frame_nav, text="recargar", command=self.ejecutar_refresh)
         self.btn_refresh.pack(side="right", padx=5)
 
+        # botones atras y adelante
+        self.btn_atras= tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag)
+        self.btn_atras.pack(side="left", padx=3)
+        self.btn_adelante = tk.Button(self.frame_nav, text="→", width=3, command=self.avanzar_pag)
+        self.btn_adelante.pack(side="left", padx=3)
+
     def ejecutar_refresh(self):
         self.estado.config(text="Recargando...")
         self.btn_refresh.config(state="disabled")
@@ -430,3 +436,13 @@ class MiNavegador:
         pestana = self.pestanas.pop(indice_seleccion)
         pestana.cerrar()
         self.estado.config(text="Pestaña cerrada")
+
+    def retroceder_pag(self):
+        pestana = self.obtener_pestana_actual()
+        if pestana:
+            pestana.ir_atras()
+
+    def avanzar_pag(self):
+        pestana = self.obtener_pestana_actual()
+        if pestana:
+            pestana.ir_adelante()

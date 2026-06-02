@@ -18,6 +18,9 @@ class Pestana:
         self.on_historial_update = on_historial_update
         self.on_navegacion = on_navegacion
         self.historial = Historial()
+
+        self.historial_atras = []
+        self.historial_adelante = []
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
         
@@ -155,7 +158,7 @@ class Pestana:
             if self.url_var.get().strip():
                 self.btn_ir.config(state="normal")
             else:
-                self.btn_ir.config(state="disabled")    
+                self.btn_ir.config(state="disabled")
 
     def crear_barra_estado(self):
         self.estado_var = tk.StringVar(value="Listo")
@@ -169,14 +172,17 @@ class Pestana:
         self.barra_estado.pack(fill="x", side="bottom")
 
 
-
-
-
     def cargar(self):
         url = self.url_var.get().strip()
         if not url:
             self.estado_var.set("URL vacía")
             return
+        
+        if hasattr(self, "historial") and self.historial.entradas:
+            url_actual = self.historial.entradas[-1][0]
+            if url_actual != url:
+                self.historial_atras.append(url_actual)
+                self.historial_adelante = []
 
         # si no tiene http, https, file, al inicio y si un nombre.algo lo buscara
         parsed = urllib.parse.urlparse(url)
@@ -186,7 +192,6 @@ class Pestana:
                 self.url_var.set(url)
 
         self.cargar_archivo(url)
-
 
 
     def recargar(self):
@@ -199,12 +204,8 @@ class Pestana:
         self.cargar_archivo(url)
 
 
-
-        
-    
     def actualizar_estado(self, texto):
         self.estado_var.set(texto)
-
 
 
     def crear_contenido(self):
@@ -243,3 +244,31 @@ class Pestana:
         # barra de estado
         self.barra_estado.config(bg=bg, fg=fg)
 
+
+    def ir_atras(self):
+        # si no hay historial atras, muestra mensaje
+        if not self.historial_atras:
+            self.estado_var.set("No hay paginas atras")
+            return
+        
+        url_pasada = self.historial_atras.pop()
+        if self.historial.entradas:
+            url_actual = self.historial.entradas[-1][0]
+            self.historial_adelante.append(url_actual)
+            
+        self.url_var.set(url_pasada)
+        self.cargar_archivo(url_pasada)
+
+    def ir_adelante(self):
+        # si no hay historial adelante, muestra mensaje
+        if not self.historial_adelante:
+            self.estado_var.set("No hay pagina siguiente")
+            return
+
+        url_futura = self.historial_adelante.pop()
+        if self.historial.entradas:
+            url_actual = self.historial.entradas[-1][0]
+            self.historial_atras.append(url_actual)
+
+        self.url_var.set(url_futura)
+        self.cargar_archivo(url_futura)
