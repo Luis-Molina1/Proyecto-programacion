@@ -19,22 +19,32 @@ class VisorHTML(HTMLParser):
         # guardar referencia de imagen
         self.imagenes_referencia = []
 
-        # Estilos de texto
-        self.text_widget.tag_configure("h1", font=("Arial", 16, "bold"))
-        self.text_widget.tag_configure("h2", font=("Arial", 14, "bold"))
+        self.text_widget.tag_configure("h1", font=("Arial", 18, "bold"), spacing1=12, spacing3=6)
+        self.text_widget.tag_configure("h2", font=("Arial", 15, "bold"), spacing1=10, spacing3=5)
+        self.text_widget.tag_configure("h3", font=("Arial", 13, "bold"), spacing1=8, spacing3=4)
         self.text_widget.tag_configure("b", font=("Arial", 12, "bold"))
         self.text_widget.tag_configure("i", font=("Arial", 12, "italic"))
+        self.text_widget.tag_configure("p", font=("Arial", 12), spacing1=6, spacing3=6)
+        self.text_widget.tag_configure("li", font=("Arial", 12), lmargin1=24, lmargin2=40, spacing1=3, spacing3=3)
 
-        # Estilo de link
-        self.text_widget.tag_configure("link",foreground="#0066cc",underline=True)
-        self.text_widget.tag_configure("link_hover",foreground="#66b2ff",underline=True)
+        self.text_widget.tag_configure("link", foreground="#0066cc", underline=True)
+        self.text_widget.tag_configure("link_hover", foreground="#66b2ff", underline=True)
 
-
-    # ---------- TAGS ----------
+    def asegurar_nueva_linea(self):
+        #evita insertar saltos de línea consecutivos
+        ultimo = self.text_widget.get("end-2c", "end-1c")
+        if ultimo and ultimo != "\n":
+            self.text_widget.insert(tk.END, "\n")
 
     def handle_starttag(self, tag, attrs):
-        if tag in ("h1", "h2", "b", "i"):
+        if tag in ("h1", "h2", "h3", "b", "i", "p", "li"):
             self.estilos_activos.append(tag)
+
+        if tag in ("h1", "h2", "h3", "p", "li"):
+            self.asegurar_nueva_linea()
+
+        if tag == "li":
+            self.text_widget.insert(tk.END, "  •  ", self.estilos_activos)
 
         elif tag == "a":
             href = None
@@ -44,7 +54,7 @@ class VisorHTML(HTMLParser):
                     break
             self.link_stack.append(href)
 
-        elif tag in ("p", "br", "li"):
+        elif tag == "br":
             self.text_widget.insert(tk.END, "\n")
 
         elif tag == "img":
@@ -57,14 +67,13 @@ class VisorHTML(HTMLParser):
         if tag in self.estilos_activos:
             self.estilos_activos.remove(tag)
 
+        if tag in ("h1", "h2", "h3", "p", "li"):
+            self.asegurar_nueva_linea()
+
         elif tag == "a":
-            self.link_stack.pop()
+            if self.link_stack:
+                self.link_stack.pop()
             self.text_widget.insert(tk.END, " ")
-
-        elif tag in ("p", "li", "h1", "h2"):
-            self.text_widget.insert(tk.END, "\n")
-
-    # ---------- TEXTO ----------
 
     def handle_data(self, data):
         texto = data.strip()
@@ -75,23 +84,19 @@ class VisorHTML(HTMLParser):
         else:
             self.text_widget.insert(tk.END, texto + " ", self.estilos_activos)
 
-    # ---------- LINK ----------
-
     def _insertar_link(self, texto, url):
         self.link_index += 1
         tag_link = f"link_{self.link_index}"
 
-        # Insertar texto con el tag del link
+        # insertar texto con el tag del link
         self.text_widget.insert(tk.END,texto,("link", tag_link))
 
         # Click
         if self.on_link_click:
             self.text_widget.tag_bind(tag_link,"<Button-1>",lambda e, u=url: self.on_link_click(u))
 
-        # Hover: cambiar color
         self.text_widget.tag_bind(tag_link,"<Enter>",lambda e, t=tag_link: (self.text_widget.tag_configure(t, foreground="#66b2ff"),self.text_widget.config(cursor="hand2"))
         )
-        # Salir: restaurar color
         self.text_widget.tag_bind(tag_link,"<Leave>",lambda e, t=tag_link: (self.text_widget.tag_configure(t, foreground="#0066cc"),self.text_widget.config(cursor=""))
         )
 
@@ -102,14 +107,13 @@ class VisorHTML(HTMLParser):
             else:
                 url_base = ""
             url_completa = urljoin(url_base, url_img)
-            # ve si es imagen de internet o local
             parsed = urllib.parse.urlparse(url_completa)
-            # si es internet
+            
             if parsed.scheme in ("http", "https"):
                 with urlopen(url_completa) as response:
                     raw_data = response.read()
                 tk_img = tk.PhotoImage(data=raw_data)
-            # si es local    
+              
             else:
                 ruta_limpia = url_img.replace("file:///", "")
                 tk_img = tk.PhotoImage(file=ruta_limpia)
