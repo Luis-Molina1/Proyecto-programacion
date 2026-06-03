@@ -2,7 +2,7 @@ import http.client
 import json
 
 class AsistenteIA:
-    API_KEY="www"
+    API_KEY="AQ.Ab8RN6Lwa7u8PrRAC39FgvnTHHu87pmkLilzf2_8yzQY7f-Gbw"
     def __init__(self, modelo="gemini-3.5-flash"):
         self.timeout= 10
         self.dominio= "generativelanguage.googleapis.com" 
@@ -51,7 +51,6 @@ class AsistenteIA:
             return None
         
 
-AQ.Ab8RN6Lwa7u8PrRAC39FgvnTHHu87pmkLilzf2_8yzQY7f-Gbw
 
 """
 if __name__ == "__main__":
