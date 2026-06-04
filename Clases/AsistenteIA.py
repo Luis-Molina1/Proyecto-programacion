@@ -2,7 +2,7 @@ import http.client
 import json
 
 class AsistenteIA:
-    API_KEY="AQ.Ab8RN6Lwa7u8PrRAC39FgvnTHHu87pmkLilzf2_8yzQY7f-Gbw"
+    API_KEY= "" #no la subo a github pq se borra
     def __init__(self, modelo="gemini-3.5-flash"):
         self.timeout= 10
         self.dominio= "generativelanguage.googleapis.com" 
