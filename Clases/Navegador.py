@@ -1,11 +1,13 @@
 import os
+import tempfile
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 from Clases.Pestaña import Pestana
 from Clases.Historial import Historial
 from Clases.Favoritos import Favoritos
+from Clases.MotordeBusqueda import MotordeBusqueda
 
 class MiNavegador:
     def __init__(self, root):
@@ -131,6 +133,10 @@ class MiNavegador:
         self.btn_refresh = tk.Button(self.frame_nav, text="recargar", command=self.ejecutar_refresh)
         self.btn_refresh.pack(side="right", padx=5)
 
+        # boton MemeFinder -> abre la página principal del Motor de Búsqueda en una nueva pestaña interna
+        self.btn_memefinder = tk.Button(self.frame_nav, text="MemeFinder", command=self.abrir_memefinder)
+        self.btn_memefinder.pack(side="right", padx=5)
+
         # botones atras y adelante
         self.btn_atras= tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag)
         self.btn_atras.pack(side="left", padx=3)
@@ -151,6 +157,32 @@ class MiNavegador:
         self.btn_refresh.config(state="normal")
         self.app.config(cursor="")
         self.root.after(2000, lambda: self.estado.config(text="Listo"))
+
+    def abrir_memefinder(self):
+        """Crea una nueva pestaña interna y carga la página principal del Motor de Búsqueda."""
+        try:
+            # Crear nueva pestaña y obtener la pestaña actual
+            self.nueva_pestana()
+            pestana = self.obtener_pestana_actual()
+
+            # Generar HTML del motor de búsqueda
+            motor = MotordeBusqueda()
+            html = motor.obtener_pagina_principal()
+
+            # Guardar HTML en archivo temporal
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
+            tmp.write(html)
+            tmp.close()
+            path = tmp.name.replace('\\', '/')
+            file_url = f'file:///{path}'
+
+            # Cargar en la pestaña
+            pestana.url_var.set(file_url)
+            pestana.cargar()
+            self.estado.config(text="MemeFinder abierto en nueva pestaña")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo abrir MemeFinder: {e}")
+            self.estado.config(text="Error al abrir MemeFinder")
 
 
     def cambiar_color_fondo(self, bg, fg):
@@ -221,7 +253,13 @@ class MiNavegador:
         if not pestana:
             return
 
-        if not urlparse(url).scheme:
+        parsed = urlparse(url)
+        if parsed.scheme == "search":
+            termino = unquote(parsed.netloc + parsed.path)
+            self.cargar_busqueda_en_pestana(termino, pestana)
+            return
+
+        if not parsed.scheme:
             current_url = pestana.obtener_url()
             if current_url.startswith("http"):
                 url = urljoin(current_url, url)
@@ -231,6 +269,20 @@ class MiNavegador:
                 url = f"file:///{ruta_rel.replace('\\', '/') }"
 
         pestana.url_var.set(url)
+        pestana.cargar()
+
+    def cargar_busqueda_en_pestana(self, termino, pestana=None):
+        motor = MotordeBusqueda()
+        html = motor.obtener_resultados_busqueda(termino)
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
+        tmp.write(html)
+        tmp.close()
+        path = tmp.name.replace('\\', '/')
+        file_url = f'file:///{path}'
+
+        if pestana is None:
+            pestana = self.obtener_pestana_actual()
+        pestana.url_var.set(file_url)
         pestana.cargar()
 
     def confirmar_cierre(self):

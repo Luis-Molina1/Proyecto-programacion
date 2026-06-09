@@ -184,8 +184,13 @@ class Pestana:
                 self.historial_atras.append(url_actual)
                 self.historial_adelante = []
 
-        # si no tiene http, https, file, al inicio y si un nombre.algo lo buscara
+        # si es una búsqueda interna, enviar al navegador para procesarla
         parsed = urllib.parse.urlparse(url)
+        if parsed.scheme == "search":
+            self.abrir_link(url)
+            return
+
+        # si no tiene http, https, file, al inicio y si un nombre.algo lo buscara
         if not parsed.scheme and not os.path.isabs(url):
             if "." in url and " " not in url:
                 url = "https://" + url
