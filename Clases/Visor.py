@@ -1,9 +1,10 @@
 
+import re
 import tkinter as tk
 from html.parser import HTMLParser
 from urllib.request import urlopen
 import urllib.parse
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 class VisorHTML(HTMLParser):
     def __init__(self, text_widget, on_link_click=None, pestana=None):
@@ -16,11 +17,15 @@ class VisorHTML(HTMLParser):
         self.estilos_activos = []
         self.link_stack = []
         self.link_index = 0
+        self.input_widgets = {}
+        self.current_button_attrs = {}
         # guardar referencia de imagen
         self.imagenes_referencia = []
         self.tags_a_ignorar = []
         self.hr_frames = []
         self.list_stack = []
+        self.input_widgets = {}
+        self.current_button_attrs = {}
         self.in_button = False
         self.button_text = ""
         self.text_widget.bind("<Configure>", self._redimensionar_hrs, add="+")
@@ -110,19 +115,29 @@ class VisorHTML(HTMLParser):
             dic_attrs = dict(attrs)
             tipo = dic_attrs.get("type", "text").lower()
             val = dic_attrs.get("value", "")
+            input_id = dic_attrs.get("id") or dic_attrs.get("name")
+
             if tipo in ("button", "submit", "reset"):
-                btn = tk.Button(self.text_widget, text=val, font=("Arial", 12), cursor="hand2")
+                onclick = dic_attrs.get("onclick")
+                command = None
+                if onclick and self.on_link_click:
+                    command = self._crear_callback_desde_onclick(onclick)
+                btn = tk.Button(self.text_widget, text=val, font=("Arial", 12), cursor="hand2", command=command)
                 self.text_widget.window_create(tk.END, window=btn)
             else:
                 entry = tk.Entry(self.text_widget, font=("Arial", 12))
                 if val:
                     entry.insert(0, val)
+                if input_id:
+                    self.input_widgets[input_id] = entry
+                entry.bind("<Return>", lambda e: self._ejecutar_buscar())
                 self.text_widget.window_create(tk.END, window=entry)
             self.text_widget.insert(tk.END, " ")
 
         elif tag == "button":
             self.in_button = True
             self.button_text = ""
+            self.current_button_attrs = dict(attrs)
 
         elif tag == "img":
             dic_attrs = dict(attrs)
@@ -158,9 +173,45 @@ class VisorHTML(HTMLParser):
                 texto_btn = self.button_text.strip()
                 if not texto_btn:
                     texto_btn = "Button"
-                btn = tk.Button(self.text_widget, text=texto_btn, font=("Arial", 12), cursor="hand2")
+                onclick = self.current_button_attrs.get("onclick")
+                command = None
+                if onclick and self.on_link_click:
+                    command = self._crear_callback_desde_onclick(onclick)
+                btn = tk.Button(self.text_widget, text=texto_btn, font=("Arial", 12), cursor="hand2", command=command)
                 self.text_widget.window_create(tk.END, window=btn)
+                self.current_button_attrs = {}
                 self.text_widget.insert(tk.END, " ")
+
+    def _ejecutar_buscar(self):
+        if not self.on_link_click:
+            return
+
+        texto = ""
+        if "campoBusqueda" in self.input_widgets:
+            texto = self.input_widgets["campoBusqueda"].get()
+        elif self.input_widgets:
+            texto = next(iter(self.input_widgets.values())).get()
+
+        texto = texto.strip()
+        if texto:
+            self.on_link_click(f"search://{quote(texto.lower())}")
+
+    def _crear_callback_desde_onclick(self, onclick):
+        onclick = onclick.strip()
+        if onclick.startswith("buscarTermino("):
+            m = re.search(r"buscarTermino\(['\"](.+?)['\"]\)", onclick)
+            if m:
+                termino = m.group(1)
+                return lambda: self.on_link_click(f"search://{quote(termino.lower())}")
+
+        if "buscar()" in onclick:
+            return self._ejecutar_buscar
+
+        m = re.search(r"window\.location\.href\s*=\s*['\"](search://[^'\"]+)['\"]", onclick)
+        if m:
+            return lambda: self.on_link_click(m.group(1))
+
+        return None
 
     def handle_data(self, data):
         if self.tags_a_ignorar:

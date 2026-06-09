@@ -1,3 +1,5 @@
+import unicodedata
+
 class MotordeBusqueda:
     def __init__(self):
         self.busquedas_predefinidas = {
@@ -121,7 +123,7 @@ class MotordeBusqueda:
 </head>
 <body>
     <div class="contenedor">
-        <div class="titulo">Super Buscador</div>
+        <div class="titulo">Super Meme Finder</div>
         
         <div class="buscador">
             <input type="text" id="campoBusqueda" placeholder="Ingresa tu búsqueda..." />
@@ -140,7 +142,7 @@ class MotordeBusqueda:
         function buscar() {
             var termino = document.getElementById('campoBusqueda').value;
             if (termino.trim()) {
-                alert('Buscaste: ' + termino);
+                window.location.href = 'search://' + encodeURIComponent(termino.toLowerCase());
             }
         }
     </script>
@@ -149,9 +151,22 @@ class MotordeBusqueda:
         """
         return html
 
+    def _normalizar_termino(self, termino):
+        termino = termino.lower().strip()
+        termino = unicodedata.normalize('NFKD', termino)
+        termino = ''.join(ch for ch in termino if not unicodedata.combining(ch))
+        return termino
+
     def obtener_resultados_busqueda(self, termino):
-        termino_normalizado = termino.lower().strip()
+        termino_normalizado = self._normalizar_termino(termino)
         resultados = self.busquedas_predefinidas.get(termino_normalizado)
+
+        if resultados is None:
+            for clave, valor in self.busquedas_predefinidas.items():
+                if termino_normalizado in clave or clave in termino_normalizado:
+                    resultados = valor
+                    break
+
         if resultados is None:
             return self._generar_sin_resultados(termino)
         return self._generar_resultados_html(termino, resultados)
