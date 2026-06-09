@@ -19,6 +19,11 @@ class VisorHTML(HTMLParser):
         # guardar referencia de imagen
         self.imagenes_referencia = []
         self.tags_a_ignorar = []
+        self.hr_frames = []
+        self.list_stack = []
+        self.in_button = False
+        self.button_text = ""
+        self.text_widget.bind("<Configure>", self._redimensionar_hrs, add="+")
 
         self.text_widget.tag_configure("h1", font=("Arial", 25, "bold"), spacing1=12, spacing3=6)
         self.text_widget.tag_configure("h2", font=("Arial", 20, "bold"), spacing1=10, spacing3=5)
@@ -28,6 +33,7 @@ class VisorHTML(HTMLParser):
         self.text_widget.tag_configure("h6", font=("Arial", 10, "bold"), spacing1=8, spacing3=1)
 
         self.text_widget.tag_configure("i", font=("Arial", 12, "italic"))
+        self.text_widget.tag_configure("em", font=("Arial", 12, "italic"))
         self.text_widget.tag_configure("p", font=("Arial", 12), spacing1=6, spacing3=6)
         self.text_widget.tag_configure("li", font=("Arial", 12), lmargin1=24, lmargin2=40, spacing1=3, spacing3=3)
 
@@ -43,19 +49,39 @@ class VisorHTML(HTMLParser):
         if ultimo and ultimo != "\n":
             self.text_widget.insert(tk.END, "\n")
 
+    def _redimensionar_hrs(self, event=None):
+        nuevo_ancho = self.text_widget.winfo_width()-5
+        if nuevo_ancho > 0:
+            for frame in self.hr_frames:
+                try:
+                    frame.config(width=nuevo_ancho)
+                except tk.TclError:
+                    pass
+
     def handle_starttag(self, tag, attrs):
         if tag in ("script", "style", "head", "title"):
             self.tags_a_ignorar.append(tag)
             return
 
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "p", "li"):
+        if tag in ("ul", "ol"):
+            self.list_stack.append({"type": tag, "count": 1})
+            self.asegurar_nueva_linea()
+            return
+
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "em", "p", "li"):
             self.estilos_activos.append(tag)
 
         if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "p", "li"):
             self.asegurar_nueva_linea()
 
         if tag == "li":
-            self.text_widget.insert(tk.END, "  •  ", self.estilos_activos)
+            prefijo = "  •  "
+            if self.list_stack:
+                lista_actual = self.list_stack[-1]
+                if lista_actual["type"] == "ol":
+                    prefijo = f"  {lista_actual['count']}.  "
+                    lista_actual["count"] += 1
+            self.text_widget.insert(tk.END, prefijo, self.estilos_activos)
 
         elif tag == "a":
             href = None
@@ -67,6 +93,36 @@ class VisorHTML(HTMLParser):
 
         elif tag == "br":
             self.text_widget.insert(tk.END, "\n")
+
+        elif tag == "hr":
+            self.asegurar_nueva_linea()
+            hr_frame = tk.Frame(self.text_widget, height=2, bg="gray", bd=1, relief="sunken")
+            self.hr_frames.append(hr_frame)
+            self.text_widget.window_create(tk.END, window=hr_frame)
+            self.text_widget.insert(tk.END, "\n")
+            
+            self.text_widget.update_idletasks()
+            ancho = self.text_widget.winfo_width() - 30
+            if ancho > 0:
+                hr_frame.config(width=ancho)
+
+        elif tag == "input":
+            dic_attrs = dict(attrs)
+            tipo = dic_attrs.get("type", "text").lower()
+            val = dic_attrs.get("value", "")
+            if tipo in ("button", "submit", "reset"):
+                btn = tk.Button(self.text_widget, text=val, font=("Arial", 12), cursor="hand2")
+                self.text_widget.window_create(tk.END, window=btn)
+            else:
+                entry = tk.Entry(self.text_widget, font=("Arial", 12))
+                if val:
+                    entry.insert(0, val)
+                self.text_widget.window_create(tk.END, window=entry)
+            self.text_widget.insert(tk.END, " ")
+
+        elif tag == "button":
+            self.in_button = True
+            self.button_text = ""
 
         elif tag == "img":
             dic_attrs = dict(attrs)
@@ -91,9 +147,29 @@ class VisorHTML(HTMLParser):
                 self.link_stack.pop()
             self.text_widget.insert(tk.END, " ")
 
+        elif tag in ("ul", "ol"):
+            if self.list_stack:
+                self.list_stack.pop()
+            self.asegurar_nueva_linea()
+
+        elif tag == "button":
+            if self.in_button:
+                self.in_button = False
+                texto_btn = self.button_text.strip()
+                if not texto_btn:
+                    texto_btn = "Button"
+                btn = tk.Button(self.text_widget, text=texto_btn, font=("Arial", 12), cursor="hand2")
+                self.text_widget.window_create(tk.END, window=btn)
+                self.text_widget.insert(tk.END, " ")
+
     def handle_data(self, data):
         if self.tags_a_ignorar:
             return
+            
+        if self.in_button:
+            self.button_text += data
+            return
+            
         texto = data.strip()
         if not texto:
             return
@@ -148,3 +224,7 @@ class VisorHTML(HTMLParser):
         super().reset()
         self.imagenes_referencia = []
         self.tags_a_ignorar = []
+        self.hr_frames = []
+        self.list_stack = []
+        self.in_button = False
+        self.button_text = ""
