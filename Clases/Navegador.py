@@ -154,12 +154,6 @@ class MiNavegador:
         self.btn_memefinder = tk.Button(self.frame_nav, text="MemeFinder", command=self.abrir_memefinder)
         self.btn_memefinder.pack(side="right", padx=5)
 
-        # botones atras y adelante
-        self.btn_atras= tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag)
-        self.btn_atras.pack(side="left", padx=3)
-        self.btn_adelante = tk.Button(self.frame_nav, text="→", width=3, command=self.avanzar_pag)
-        self.btn_adelante.pack(side="left", padx=3)
-
     def ejecutar_refresh(self):
         self.estado.config(text="Recargando...")
         self.btn_refresh.config(state="disabled")
