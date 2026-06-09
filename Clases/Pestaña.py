@@ -102,13 +102,38 @@ class Pestana:
             # usar el visor ya creado
             self.visor.feed(contenido)
 
-            # actualizar título de la pestaña
-            nombre = os.path.basename(ruta)
-            self.notebook.tab(self.frame, text=nombre)
+            # intentar extraer <title> del contenido (para archivos locales)
+            titulo_extraido = None
+            match_titulo = re.search(r"<title>(.*?)</title>", contenido, re.IGNORECASE | re.DOTALL)
+            if match_titulo:
+                titulo_extraido = html.unescape(match_titulo.group(1).strip())
+
+            # determinar nombre a mostrar en la pestaña
+            if titulo_extraido:
+                nombre = titulo_extraido
+            else:
+                nombre = os.path.basename(ruta)
+
+            # si la pestaña ya tenía un título personalizado (no 'Nueva pestaña'), preferirlo
+            try:
+                tab_actual = self.notebook.tab(self.frame, "text")
+            except Exception:
+                tab_actual = None
+
+            if tab_actual and tab_actual != "Nueva pestaña":
+                # si encontramos un título en el HTML, úsalo; si no, mantenemos el título existente
+                display_name = nombre if titulo_extraido else tab_actual
+            else:
+                display_name = nombre
+
+            if len(display_name) > 25:
+                display_name = display_name[:25] + "..."
+
+            self.notebook.tab(self.frame, text=display_name)
 
             # historial (si existe)
             if hasattr(self, "historial"):
-                self.historial.agregar(url, nombre)
+                self.historial.agregar(url, display_name)
 
             if self.on_historial_update:
                 self.on_historial_update()

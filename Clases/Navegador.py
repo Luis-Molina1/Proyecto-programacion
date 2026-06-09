@@ -162,7 +162,7 @@ class MiNavegador:
         """Crea una nueva pestaña interna y carga la página principal del Motor de Búsqueda."""
         try:
             # Crear nueva pestaña y obtener la pestaña actual
-            self.nueva_pestana()
+            self.nueva_pestana("Super Meme Finder")
             pestana = self.obtener_pestana_actual()
 
             # Generar HTML del motor de búsqueda
@@ -179,6 +179,7 @@ class MiNavegador:
             # Cargar en la pestaña
             pestana.url_var.set(file_url)
             pestana.cargar()
+            self.notebook.tab(pestana.frame, text="Super Meme Finder")
             self.estado.config(text="MemeFinder abierto en nueva pestaña")
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo abrir MemeFinder: {e}")
@@ -432,11 +433,12 @@ class MiNavegador:
         self.actualizar_menu_fav()
         self.estado.config(text="Favorito eliminado")
 
-    def nueva_pestana(self):
+    def nueva_pestana(self, titulo="Nueva pestaña"):
         
         pestana = Pestana(
             self.notebook,
             self.abrir_link,
+            titulo=titulo,
             bg=self.color_bg_actual,
             fg=self.color_fg_actual,
             on_historial_update=self.actualizar_menu_historial,

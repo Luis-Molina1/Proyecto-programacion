@@ -123,7 +123,7 @@ class MotordeBusqueda:
 </head>
 <body>
     <div class="contenedor">
-        <div class="titulo">Super Buscador</div>
+        <div class="titulo">Super Meme Finder</div>
         
         <div class="buscador">
             <input type="text" id="campoBusqueda" placeholder="Ingresa tu búsqueda..." />
