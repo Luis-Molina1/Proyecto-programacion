@@ -11,12 +11,13 @@ from Clases.ClienteHTTP import ClienteHTTP
 
 
 class Pestana:
-    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None, on_navegacion=None):
+    def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None, on_navegacion=None, navegador=None):
         self.notebook = notebook
         self.frame = tk.Frame(notebook)
         self.abrir_link = abrir_link
         self.on_historial_update = on_historial_update
         self.on_navegacion = on_navegacion
+        self.navegador = navegador
         self.historial = Historial()
 
         self.historial_atras = []
@@ -39,6 +40,15 @@ class Pestana:
         self.estado_var.set("Cargando...")
         self.text_widget.delete("1.0", tk.END)
         self.visor.reset()
+
+        if hasattr(self, "navegador") and self.navegador and self.navegador.modo_offline.get():
+            parsed= urllib.parse.urlparse(url)
+            if parsed.scheme in ("http", "https"):
+                self.text_widget.insert(tk.END, "Navegador en MODO OFFLINE, cambia de modo para cargar esta página")
+                self.estado_var.set("MODO OFFLINE activo")
+                if hasattr(self.navegador, "actualizar_botones_navegacion"):
+                    self.navegador.actualizar_botones_navegacion()
+                return
 
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme in ("http", "https"):
@@ -82,6 +92,10 @@ class Pestana:
             self.estado_var.set(f"{estatus} {razon}")
             if self.on_navegacion:
                 self.on_navegacion()
+
+                # se actualizan los botones de navegacion para online
+            if self.navegador and hasattr(self.navegador, "actualizar_botones_navegacion"):
+                self.navegador.actualizar_botones_navegacion()
             return
         
         ruta = url.replace("file:///", "")
@@ -114,6 +128,9 @@ class Pestana:
                 self.on_historial_update()
 
             self.estado_var.set("Completado")
+            # se actualizan los botones de navegacion para local
+            if self.navegador and hasattr(self.navegador, "actualizar_botones_navegacion"):
+                self.navegador.actualizar_botones_navegacion()
 
         except Exception as e:
             messagebox.showerror("Error", str(e))

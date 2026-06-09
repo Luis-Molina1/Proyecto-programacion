@@ -20,6 +20,8 @@ class MiNavegador:
         self.app.geometry("800x600")
         self.app.minsize(400, 300)
 
+        self.modo_offline= tk.BooleanVar(value=False)
+
         
         # quita los bordes de cerrar, minimizar y maximizar
         self.app.overrideredirect(True)
@@ -51,6 +53,12 @@ class MiNavegador:
 
         self.actualizar_menu_historial()
         self.actualizar_menu_fav()
+
+        self.btn_atras = tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag, state="disabled")
+        self.btn_atras.pack(side="left", padx=3)
+        self.btn_adelante = tk.Button(self.frame_nav, text="→", width=3, command=self.avanzar_pag, state="disabled")
+        self.btn_adelante.pack(side="left", padx=3)
+        
 
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
@@ -131,11 +139,15 @@ class MiNavegador:
         self.btn_refresh = tk.Button(self.frame_nav, text="recargar", command=self.ejecutar_refresh)
         self.btn_refresh.pack(side="right", padx=5)
 
-        # botones atras y adelante
-        self.btn_atras= tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag)
-        self.btn_atras.pack(side="left", padx=3)
-        self.btn_adelante = tk.Button(self.frame_nav, text="→", width=3, command=self.avanzar_pag)
-        self.btn_adelante.pack(side="left", padx=3)
+        self.chk_offline = tk.Checkbutton(
+            self.frame_nav, 
+            text="Modo Offline", 
+            variable=self.modo_offline,
+            onvalue=True, 
+            offvalue=False,
+            command=self.notificar_cambio_modo
+        )
+        self.chk_offline.pack(side="right", padx=10)
 
     def ejecutar_refresh(self):
         self.estado.config(text="Recargando...")
@@ -247,7 +259,7 @@ class MiNavegador:
     def crear_area_contenido(self):
         self.notebook = ttk.Notebook(self.app)
         self.notebook.pack(fill="both", expand=True)
-        self.notebook.bind("<<NotebookTabChanged>>", lambda e: (self.actualizar_menu_historial(), self.actualizar_menu_fav(), self.actualizar_estrella()))
+        self.notebook.bind("<<NotebookTabChanged>>", lambda e: (self.actualizar_menu_historial(), self.actualizar_menu_fav(), self.actualizar_estrella(), self.actualizar_botones_navegacion()))
 
         
         self.pestanas = []
@@ -388,7 +400,8 @@ class MiNavegador:
             bg=self.color_bg_actual,
             fg=self.color_fg_actual,
             on_historial_update=self.actualizar_menu_historial,
-            on_navegacion=self.actualizar_estrella
+            on_navegacion=self.actualizar_estrella,
+            navegador=self
         )
 
         self.pestanas.append(pestana)
@@ -441,8 +454,32 @@ class MiNavegador:
         pestana = self.obtener_pestana_actual()
         if pestana:
             pestana.ir_atras()
+            self.actualizar_botones_navegacion()
 
     def avanzar_pag(self):
         pestana = self.obtener_pestana_actual()
         if pestana:
             pestana.ir_adelante()
+            self.actualizar_botones_navegacion()
+
+    def actualizar_botones_navegacion(self):
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
+            self.btn_atras.config(state="disabled")
+            self.btn_adelante.config(state="disabled")
+            return
+        if pestana.historial_atras:
+            self.btn_atras.config(state="normal")
+        else:
+            self.btn_atras.config(state="disabled")
+        if pestana.historial_adelante:
+            self.btn_adelante.config(state="normal")
+        else:
+            self.btn_adelante.config(state="disabled")
+
+    def notificar_cambio_modo(self):
+        if self.modo_offline.get():
+            self.estado.config(text="Navegador en MODO OFFLINE", fg="red")
+        else:
+            self.estado.config(text="Navegador MODO ONLINE", fg="green")
+        self.actualizar_botones_navegacion()
