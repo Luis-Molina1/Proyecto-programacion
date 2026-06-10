@@ -3,15 +3,15 @@ import json
 
 class AsistenteIA:
     API_KEY= "" #no la subo a github pq se borra
-    def __init__(self, modelo="gemini-3.5-flash"):
+    def __init__(self):
+        modelo="gemini-3.5-flash"
         self.timeout= 10
         self.dominio= "generativelanguage.googleapis.com" 
         self.modelo= modelo 
 
     def procesar_comando(self, comando):
         if not comando.strip():
-            print("comando vacio")
-            return None
+            return None, "comando vacio"
         
         ruta= f"/v1beta/models/{self.modelo}:generateContent?key={self.API_KEY}"
         prompt= f"responde en formato HTML y no pongas textualmente que estas respondiewndo en html. Pregunta: {comando}"
@@ -30,25 +30,18 @@ class AsistenteIA:
             respuesta= conn.getresponse()
             datos= respuesta.read().decode("utf-8")
             if respuesta.status != 200:
-                print(f"Error: {respuesta.status} - {respuesta.reason}")
-                return None
+                return None, f"Error {respuesta.status}: {respuesta.reason}"
             respuesta= json.loads(datos)
             texto = respuesta["candidates"][0]["content"]["parts"][0]["text"].strip()
             if texto:
-                return texto
-            else:
-                print(f"gemini no genero respuesta")
-                return None
+                return (texto, None) if texto else (None, "Gemini no generó respuesta")
         
         except TimeoutError:
-            print(f"Error tiempo de espera agotado")
-            return None
+            return None, "tiempo de espera agotado"
         except (KeyError, IndexError):
-            print(f"gemini no genero ninguna respuesta")
-            return None
+            return None, "gemini no genero ninguna respuesta"
         except Exception as e:
-            print(f"error inesperado {e}")
-            return None
+            return None, f"error inesperado {e}"
         
 
 

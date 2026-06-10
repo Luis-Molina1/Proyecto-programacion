@@ -8,7 +8,7 @@ from tkinter import messagebox
 from Clases.Visor import VisorHTML
 from Clases.Historial import Historial
 from Clases.ClienteHTTP import ClienteHTTP
-
+from Clases.AsistenteIA import AsistenteIA
 
 class Pestana:
     def __init__(self, notebook, abrir_link, titulo="Nueva pestaña", bg="white", fg="black", on_historial_update=None, on_navegacion=None, navegador=None):
@@ -19,6 +19,7 @@ class Pestana:
         self.on_navegacion = on_navegacion
         self.navegador = navegador
         self.historial = Historial()
+        self.asistente = AsistenteIA()
 
         self.historial_atras = []
         self.historial_adelante = []
@@ -189,11 +190,19 @@ class Pestana:
 
         self.entry_url = tk.Entry(self.frame_nav, textvariable=self.url_var)
         self.entry_url.pack(side="left", fill="x", expand=True, padx=5, pady=2)
-
         self.btn_ir = tk.Button(self.frame_nav, text="Ir", command=self.cargar)
         self.btn_ir.pack(side="left", padx=5)
         self.url_var.trace_add("write", self.validar_entrada)
         self.validar_entrada()
+
+        self.frame_ia = tk.Frame(self.frame)
+        self.frame_ia.pack(fill="x")
+        self.ia_var = tk.StringVar()
+        self.entry_ia = tk.Entry(self.frame_ia, textvariable=self.ia_var)
+        self.entry_ia.pack(side="left", fill="x", expand=True, padx=5, pady=2)
+        self.entry_ia.bind("<Return>", lambda e: self.consultar_ia())
+        self.btn_ia = tk.Button(self.frame_ia, text="IA", command=self.consultar_ia)
+        self.btn_ia.pack(side="left", padx=2)
 
     def validar_entrada(self, *args):
             #si hay texto se activa el boton
@@ -319,3 +328,24 @@ class Pestana:
 
         self.url_var.set(url_futura)
         self.cargar_archivo(url_futura)
+
+    def consultar_ia(self):
+        comando= self.ia_var.get().strip()
+        if not comando:
+            self.estado_var.set("comando vacio, escriba un comando")
+            return
+        self.estado_var.set("preguntando a gemini....")
+        self.btn_ia.config(state="disabled")
+        self.frame.update()
+        
+        respuesta, error = self.asistente.procesar_comando(comando)
+        self.btn_ia.config(state="normal")
+        self.visor.reset()
+        self.text_widget.delete("1.0", tk.END)
+        if error:
+            self.visor.feed(f"<h2>Error</h2><p>{error}</p>")
+            self.estado_var.set(f"Error: {error}")
+            return
+        self.visor.feed(f"{respuesta}")
+        self.ia_var.set("")
+        self.estado_var.set("respuesta recibida")

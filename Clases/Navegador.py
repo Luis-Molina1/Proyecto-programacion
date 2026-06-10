@@ -230,9 +230,23 @@ class MiNavegador:
         self.frame_inferior.pack(side="bottom", fill="x")
         self.estado = tk.Label(self.frame_inferior, text="Listo", bd=1, relief="sunken", anchor="w")
         self.estado.pack(side="left", fill="x", expand=True)
-        self.grip = ttk.Sizegrip(self.frame_inferior)
-        self.grip.pack(side="right", anchor="se")
+        self.grip = tk.Label(self.app, text="⠿", cursor="size_nw_se", bg="#FFFFFF", width=2)
+        self.grip.place(relx=1.0, rely=1.0, anchor="se")
+        self.grip.bind("<Button-1>", self.grip_inicio)
+        self.grip.bind("<B1-Motion>", self.grip_arrastrar)
 
+    def grip_inicio(self, event):
+        self._grip_x = event.x_root
+        self._grip_y = event.y_root
+        self._ancho_inicial = self.app.winfo_width()
+        self._alto_inicial = self.app.winfo_height()
+
+    def grip_arrastrar(self, event):
+        ancho = self._ancho_inicial + (event.x_root - self._grip_x)
+        alto = self._alto_inicial + (event.y_root - self._grip_y)
+        ancho = max(400, ancho)
+        alto = max(300, alto)
+        self.app.geometry(f"{ancho}x{alto}")
     def get_pos(self, event):
         self.offset_x = event.x
         self.offset_y = event.y
