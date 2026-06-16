@@ -50,6 +50,39 @@ class MotordeBusqueda:
                 {"titulo": "Memedroid Chile", "url": "https://www.memedroid.com/memes", "descripcion": "Colección de memes nuevos."},
                 {"titulo": "Facebook - Memes", "url": "https://www.facebook.com/search/top?q=memes", "descripcion": "Memes compartidos recientemente."},
                 {"titulo": "Know Your Meme", "url": "https://knowyourmeme.com", "descripcion": "Últimos memes y su contexto."}
+            ],
+            "top juegos 2026": [
+                {"titulo": "Steam - Top juegos", "url": "https://store.steampowered.com", "descripcion": "Explora los juegos más populares y recomendados en Steam."},
+                {"titulo": "Epic Games Store", "url": "https://store.epicgames.com", "descripcion": "Descubre los títulos destacados y tendencias del momento."},
+                {"titulo": "Metacritic - Juegos del año", "url": "https://www.metacritic.com", "descripcion": "Reseñas y rankings sobre juegos destacados."},
+                {"titulo": "IGN - Juegos", "url": "https://www.ign.com", "descripcion": "Noticias, reseñas y listas de los mejores juegos."}
+            ],
+            "recetas de pizza": [
+                {"titulo": "Allrecipes - Pizza", "url": "https://www.allrecipes.com/search?q=pizza", "descripcion": "Recetas variadas de pizza para todos los gustos."},
+                {"titulo": "RecetasGratis - Pizza", "url": "https://www.recetasgratis.net/buscar?q=pizza", "descripcion": "Ideas fáciles y rápidas para hacer pizza en casa."},
+                {"titulo": "Food Network - Pizza", "url": "https://www.foodnetwork.com/search/pizza", "descripcion": "Recetas y consejos para preparar pizzas deliciosas."},
+                {"titulo": "BBC Good Food - Pizza", "url": "https://www.bbcgoodfood.com/search?q=pizza", "descripcion": "Recetas clásicas y creativas de pizza."}
+            ],
+            "gatos": [
+                {"titulo": "The Spruce Pets - Gatos", "url": "https://www.thesprucepets.com/cats-4162035", "descripcion": "Consejos y cuidados para gatos."},
+                {"titulo": "Wikipedia - Gato", "url": "https://es.wikipedia.org/wiki/Gato", "descripcion": "Información general sobre la especie felina."},
+                {"titulo": "Petfinder - Gatos", "url": "https://www.petfinder.com/search/cats-for-adoption", "descripcion": "Adopción y cuidado de gatos."},
+                {"titulo": "Catster", "url": "https://www.catster.com", "descripcion": "Noticias, razas y consejos para gatos."}
+            ],
+            "como detectar la ia": [
+                {"titulo": "Cómo detectar IA - Guía básica", "url": "https://www.google.com/search?q=como+detectar+ia", "descripcion": "Búsqueda general sobre señales para identificar contenido generado por IA."},
+                {"titulo": "OpenAI - Detecting AI text", "url": "https://openai.com", "descripcion": "Recursos y referencias sobre detección y uso responsable de IA."},
+                {"titulo": "Wikipedia - Inteligencia artificial", "url": "https://es.wikipedia.org/wiki/Inteligencia_artificial", "descripcion": "Información general sobre la IA y sus aplicaciones."}
+            ],
+            "como pasar el semestre": [
+                {"titulo": "Cómo pasar el semestre - Consejos", "url": "https://www.google.com/search?q=como+pasar+el+semestre", "descripcion": "Ideas prácticas para organizar el estudio y mejorar el rendimiento."},
+                {"titulo": "Estudiar mejor - Técnicas", "url": "https://www.google.com/search?q=tecnicas+de+estudio", "descripcion": "Métodos útiles para aprender más eficientemente."},
+                {"titulo": "Productividad académica", "url": "https://www.google.com/search?q=productividad+estudiantil", "descripcion": "Estrategias para administrar el tiempo y estudiar mejor."}
+            ],
+            "cual es el mejor equipo de futbol": [
+                {"titulo": "Google - Mejor equipo de fútbol", "url": "https://www.google.com/search?q=mejor+equipo+de+futbol", "descripcion": "Resultados generales sobre debates y rankings sobre el mejor equipo."},
+                {"titulo": "ESPN - Fútbol", "url": "https://www.espn.com/soccer", "descripcion": "Noticias y clasificaciones de fútbol internacional."},
+                {"titulo": "FIFA", "url": "https://www.fifa.com", "descripcion": "Información oficial sobre torneos y rankings mundiales."}
             ]
         }
 
@@ -207,6 +240,12 @@ class MotordeBusqueda:
             <li>Clima en mi ciudad</li>
             <li>Locales de comida</li>
             <li>Ultimos memes</li>
+            <li>Top juegos 2026</li>
+            <li>Recetas de pizza</li>
+            <li>Gatos</li>
+            <li>Como detectar la IA</li>
+            <li>Como pasar el semestre</li>
+            <li>Cual es el mejor equipo de futbol</li>
         </ul>
     </div>
 </body>
