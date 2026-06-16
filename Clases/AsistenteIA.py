@@ -14,7 +14,7 @@ class AsistenteIA:
             return None, "comando vacio"
         
         ruta= f"/v1beta/models/{self.modelo}:generateContent?key={self.API_KEY}"
-        prompt= f"responde en formato HTML y no pongas textualmente que estas respondiewndo en html. Pregunta: {comando}"
+        prompt= f"responde en formato HTML, no pongas textualmente que estas respondiewndo en html y no pongas las comillas esas y html textualmente. Pregunta: {comando}"
         cuerpo= json.dumps({
             "contents": [
                 {

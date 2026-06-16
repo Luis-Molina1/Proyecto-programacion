@@ -23,6 +23,7 @@ class Pestana:
 
         self.historial_atras = []
         self.historial_adelante = []
+        self.ia_activo = False
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
         
@@ -349,23 +350,42 @@ class Pestana:
         self.url_var.set(url_futura)
         self.cargar_archivo(url_futura)
 
+    def abrir_ia(self):
+        if not self.ia_activo:
+            self.ia_activo = True
+            self.text_ia.delete("1.0", tk.END)
+            self.visor_ia.reset()
+            self.visor_ia.feed("Escribe tu pregunta arriba</p>")
+            self.frame_overlay.lift()
+            self.entry_ia.focus()
+            self.btn_ia_toggle.config(text="Volver")
+            self.estado_var.set("modo IA")
+        else:
+            self.ia_activo = False
+            self.text_ia.delete("1.0", tk.END)
+            self.ia_var.set("")
+            self.frame_overlay.lower()
+            self.btn_ia_toggle.config(text="IA")
+            self.estado_var.set("volviendo a pagina anterior")
+
     def consultar_ia(self):
-        comando= self.ia_var.get().strip()
+        comando = self.ia_var.get().strip()
         if not comando:
-            self.estado_var.set("comando vacio, escriba un comando")
+            self.estado_var.set("escribe una pregunta")
             return
-        self.estado_var.set("preguntando a gemini....")
-        self.btn_ia.config(state="disabled")
+        self.estado_var.set("consultando a la IA...")
+        self.btn_ia_consultar.config(state="disabled")
+        self.entry_ia.config(state="disabled")
         self.frame.update()
-        
         respuesta, error = self.asistente.procesar_comando(comando)
-        self.btn_ia.config(state="normal")
-        self.visor.reset()
-        self.text_widget.delete("1.0", tk.END)
+        self.btn_ia_consultar.config(state="normal")
+        self.entry_ia.config(state="normal")
+        self.text_ia.delete("1.0", tk.END)
+        self.visor_ia.reset()
         if error:
-            self.visor.feed(f"<h2>Error</h2><p>{error}</p>")
-            self.estado_var.set(f"Error: {error}")
+            self.visor_ia.feed(f"<p>error: {error}</p>")
+            self.estado_var.set(f"Error")
             return
-        self.visor.feed(f"{respuesta}")
+        self.visor_ia.feed(f"{respuesta}")
         self.ia_var.set("")
-        self.estado_var.set("respuesta recibida")
+        self.estado_var.set("pregunta completa")
