@@ -39,6 +39,12 @@ class Pestana:
 
     def cargar_archivo(self, url):
         self.estado_var.set("Cargando...")
+        try:
+            # forzar actualización de la UI antes de operaciones bloqueantes
+            self.frame.update_idletasks()
+            self.frame.update()
+        except Exception:
+            pass
         self.text_widget.delete("1.0", tk.END)
         self.visor.reset()
 
@@ -53,6 +59,13 @@ class Pestana:
 
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme in ("http", "https"):
+            try:
+                # mostrar estado y forzar redraw antes de la petición
+                self.estado_var.set("Cargando...")
+                self.frame.update_idletasks()
+                self.frame.update()
+            except Exception:
+                pass
             resultado = ClienteHTTP().obtener_contenido(url, segundos_retraso=0)
             
             # si fallo la conexion https intentamos por http
@@ -111,6 +124,13 @@ class Pestana:
             return
 
         try:
+            try:
+                # forzar que el estado se muestre antes de leer archivo local
+                self.estado_var.set("Cargando...")
+                self.frame.update_idletasks()
+                self.frame.update()
+            except Exception:
+                pass
             with open(ruta, "r", encoding="utf-8") as f:
                 contenido = f.read()
 

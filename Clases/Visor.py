@@ -359,18 +359,24 @@ class VisorHTML(HTMLParser):
 
     def _insertar_imagen(self, url_img):
         try:
+            # indicar en la barra de estado que se está cargando una imagen
+            if self.pestana and hasattr(self.pestana, "estado_var"):
+                try:
+                    self.pestana.estado_var.set("Cargando imagen...")
+                except Exception:
+                    pass
+
             if self.pestana:
                 url_base = self.pestana.url_var.get().strip()
             else:
                 url_base = ""
             url_completa = urljoin(url_base, url_img)
             parsed = urllib.parse.urlparse(url_completa)
-            
+
             if parsed.scheme in ("http", "https"):
                 with urlopen(url_completa) as response:
                     raw_data = response.read()
                 tk_img = tk.PhotoImage(data=raw_data)
-              
             else:
                 ruta_limpia = url_img.replace("file:///", "")
                 tk_img = tk.PhotoImage(file=ruta_limpia)
@@ -378,6 +384,13 @@ class VisorHTML(HTMLParser):
             self.imagenes_referencia.append(tk_img)
             self.text_widget.image_create(tk.END, image=tk_img)
             self.text_widget.insert(tk.END, "\n")
+
+            # indicar finalización
+            if self.pestana and hasattr(self.pestana, "estado_var"):
+                try:
+                    self.pestana.estado_var.set("Completado")
+                except Exception:
+                    pass
 
         except Exception as e:
             print(f"Error al cargar imagen {url_img}: {e}")
