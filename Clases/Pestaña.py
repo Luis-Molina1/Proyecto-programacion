@@ -216,14 +216,8 @@ class Pestana:
         self.url_var.trace_add("write", self.validar_entrada)
         self.validar_entrada()
 
-        self.frame_ia = tk.Frame(self.frame)
-        self.frame_ia.pack(fill="x")
-        self.ia_var = tk.StringVar()
-        self.entry_ia = tk.Entry(self.frame_ia, textvariable=self.ia_var)
-        self.entry_ia.pack(side="left", fill="x", expand=True, padx=5, pady=2)
-        self.entry_ia.bind("<Return>", lambda e: self.consultar_ia())
-        self.btn_ia = tk.Button(self.frame_ia, text="IA", command=self.consultar_ia)
-        self.btn_ia.pack(side="left", padx=2)
+        self.btn_ia_toggle = tk.Button(self.frame_nav, text="IA", command=self.abrir_ia)
+        self.btn_ia_toggle.pack(side="right", padx=5)
 
     def validar_entrada(self, *args):
             #si hay texto se activa el boton
@@ -298,6 +292,25 @@ class Pestana:
             on_link_click=self.abrir_link,
             pestana=self
         )
+        self.frame_overlay = tk.Frame(self.frame_contenido, bg="white")
+        self.frame_overlay.place(in_=self.frame_contenido, x=0, y=0, relwidth=1, relheight=1)
+        self.frame_overlay.lower()
+        self.frame_ia_overlay = tk.Frame(self.frame_overlay, bg="white")
+        self.frame_ia_overlay.pack(fill="x", padx=5, pady=5)
+        self.ia_var = tk.StringVar()
+        self.entry_ia = tk.Entry(self.frame_ia_overlay, textvariable=self.ia_var, font=("Arial", 12))
+        self.entry_ia.pack(side="left", fill="x", expand=True, padx=5, pady=2)
+        self.entry_ia.bind("<Return>", lambda e: self.consultar_ia())
+        self.btn_ia_consultar = tk.Button(self.frame_ia_overlay, text="Preguntar", command=self.consultar_ia)
+        self.btn_ia_consultar.pack(side="left", padx=2)
+        self.text_ia = tk.Text(self.frame_overlay, wrap="word", font=("Arial", 11), bg="white")
+        self.text_ia.pack(fill="both", expand=True, padx=5, pady=5)
+        self.visor_ia = VisorHTML(
+            self.text_ia,
+            on_link_click=self.abrir_link,
+            pestana=self
+        )
+
     def auto_desplazamiento(self, barra, inicio, fin):
         if float(inicio) <= 0.0 and float(fin) >= 1.0:
             barra.config(width=0)
