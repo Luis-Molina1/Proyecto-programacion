@@ -20,7 +20,8 @@ class Pestana:
         self.navegador = navegador
         self.historial = Historial()
         self.asistente = AsistenteIA()
-
+        self.color_bg_actual = bg
+        self.color_fg_actual = fg
         self.historial_atras = []
         self.historial_adelante = []
         self.ia_activo = False
@@ -319,13 +320,25 @@ class Pestana:
         barra.set(inicio, fin)
     
     def aplicar_color(self, bg, fg):
+        self.color_bg_actual = bg
+        self.color_fg_actual = fg
         # fondo de la pestaña
         self.frame.config(bg=bg)
-
+        colores_oscuros = {
+        "white": "#e0e0e0",
+        "#f4ecd8": "#d4cebc",
+        "#A9A9A9": "#808080",
+        "#1e1e1e": "#0a0a0a"
+        }
         # barra de navegación
         self.frame_nav.config(bg=bg)
         self.entry_url.config(bg="white", fg="black")
         self.btn_ir.config(bg=bg, fg=fg)
+        if hasattr(self.navegador, "modo_offline") and self.navegador.modo_offline.get():
+            bg_oscuro = colores_oscuros.get(bg, bg)
+            self.btn_ia_toggle.config(bg=bg_oscuro, fg="#666666")
+        else:
+            self.btn_ia_toggle.config(bg=bg, fg=fg)
 
         # área de contenido
         self.frame_contenido.config(bg=bg)
@@ -362,8 +375,29 @@ class Pestana:
 
         self.url_var.set(url_futura)
         self.cargar_archivo(url_futura)
+    def actualizar_estado_ia_por_offline(self):
+        colores_oscuros = {
+            "white": "#e0e0e0",
+            "#f4ecd8": "#d4cebc",
+            "#A9A9A9": "#808080",
+            "#1e1e1e": "#0a0a0a"
+        }
+        
+        if hasattr(self.navegador, "modo_offline") and self.navegador.modo_offline.get():
+            if self.ia_activo:
+                self.ia_activo = False
+                self.frame_overlay.lower()
+                self.btn_ia_toggle.config(text="IA")
+                self.estado_var.set("IA desactivada (modo offline)")
+            
+            bg_oscuro = colores_oscuros.get(self.color_bg_actual, self.color_bg_actual)
+            self.btn_ia_toggle.config(state="disabled", bg=bg_oscuro, fg="#666666")
+        else:
+            self.btn_ia_toggle.config(state="normal", bg=self.color_bg_actual, fg=self.color_fg_actual)
 
     def abrir_ia(self):
+        if hasattr(self.navegador, "modo_offline") and self.navegador.modo_offline.get():
+            return
         if not self.ia_activo:
             self.ia_activo = True
             self.text_ia.delete("1.0", tk.END)

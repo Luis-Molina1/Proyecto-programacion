@@ -236,14 +236,14 @@ class MiNavegador:
         self.grip.bind("<B1-Motion>", self.grip_arrastrar)
 
     def grip_inicio(self, event):
-        self._grip_x = event.x_root
-        self._grip_y = event.y_root
-        self._ancho_inicial = self.app.winfo_width()
-        self._alto_inicial = self.app.winfo_height()
+        self.grip_x = event.x_root
+        self.grip_y = event.y_root
+        self.ancho_inicial = self.app.winfo_width()
+        self.alto_inicial = self.app.winfo_height()
 
     def grip_arrastrar(self, event):
-        ancho = self._ancho_inicial + (event.x_root - self._grip_x)
-        alto = self._alto_inicial + (event.y_root - self._grip_y)
+        ancho = self.ancho_inicial + (event.x_root - self.grip_x)
+        alto = self.alto_inicial + (event.y_root - self.grip_y)
         ancho = max(400, ancho)
         alto = max(300, alto)
         self.app.geometry(f"{ancho}x{alto}")
@@ -275,29 +275,15 @@ class MiNavegador:
 
 
     def abrir_link(self, url):
-        # Abrir enlaces http/https en una nueva pestaña; búsquedas internas se manejan en la pestaña actual
-        if not url:
+        pestana = self.obtener_pestana_actual()
+        if not pestana:
             return
 
         parsed = urlparse(url)
-
         if parsed.scheme == "search":
-            # búsqueda interna: cargar en la pestaña actual
-            pestana = self.obtener_pestana_actual()
-            if not pestana:
-                return
             termino = unquote(parsed.netloc + parsed.path)
             self.cargar_busqueda_en_pestana(termino, pestana)
             return
-
-        # Si es un enlace externo http(s), abrir en nueva pestaña
-        if parsed.scheme in ("http", "https"):
-            self.nueva_pestana()
-            pestana = self.obtener_pestana_actual()
-        else:
-            pestana = self.obtener_pestana_actual()
-            if not pestana:
-                return
 
         if not parsed.scheme:
             current_url = pestana.obtener_url()
@@ -546,21 +532,23 @@ class MiNavegador:
     def actualizar_botones_navegacion(self):
         pestana = self.obtener_pestana_actual()
         if not pestana:
-            self.btn_atras.config(state="disabled", bg="SystemButtonFace")
-            self.btn_adelante.config(state="disabled", bg="SystemButtonFace")
+            self.btn_atras.config(state="disabled")
+            self.btn_adelante.config(state="disabled")
             return
         if pestana.historial_atras:
-            self.btn_atras.config(state="normal", bg="#87CEEB")
+            self.btn_atras.config(state="normal")
         else:
-            self.btn_atras.config(state="disabled", bg="SystemButtonFace")
+            self.btn_atras.config(state="disabled")
         if pestana.historial_adelante:
-            self.btn_adelante.config(state="normal", bg="#87CEEB")
+            self.btn_adelante.config(state="normal")
         else:
-            self.btn_adelante.config(state="disabled", bg="SystemButtonFace")
+            self.btn_adelante.config(state="disabled")
 
     def notificar_cambio_modo(self):
         if self.modo_offline.get():
             self.estado.config(text="Navegador en MODO OFFLINE", fg="red")
         else:
             self.estado.config(text="Navegador MODO ONLINE", fg="green")
+        for pestana in self.pestanas:
+            pestana.actualizar_estado_ia_por_offline()
         self.actualizar_botones_navegacion()

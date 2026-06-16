@@ -1,4 +1,5 @@
 import http.client
+import socket
 import json
 
 class AsistenteIA:
@@ -14,7 +15,7 @@ class AsistenteIA:
             return None, "comando vacio"
         
         ruta= f"/v1beta/models/{self.modelo}:generateContent?key={self.API_KEY}"
-        prompt= f"responde en formato HTML, no pongas textualmente que estas respondiewndo en html y no pongas las comillas esas y html textualmente. Pregunta: {comando}"
+        prompt= f"Responde en formato HTML puro, sin ```html. Pregunta: {comando}"
         cuerpo= json.dumps({
             "contents": [
                 {
@@ -36,13 +37,14 @@ class AsistenteIA:
             if texto:
                 return (texto, None) if texto else (None, "Gemini no generó respuesta")
         
-        except TimeoutError:
-            return None, "tiempo de espera agotado"
-        except (KeyError, IndexError):
-            return None, "gemini no genero ninguna respuesta"
+        except socket.timeout:
+            return None, "Tiempo de espera agotado (mas de 10 segundos)"
+        except (ConnectionRefusedError, ConnectionError):
+            return None, "No se pudo conectar a Gemini"
+        except (KeyError, IndexError, json.JSONDecodeError):
+            return None, "Gemini no genero ninguna respuesta"
         except Exception as e:
-            return None, f"error inesperado {e}"
-        
+            return None, f"Error inesperado: {str(e)}"
 
 
 """
