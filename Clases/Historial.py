@@ -3,8 +3,7 @@ class Historial:
         self.entradas = []
         self.limite = 10
     def agregar(self, url, titulo):
-        if self.entradas and self.entradas[-1][0] == url:
-            return
+        self.entradas= [entrada for entrada in self.entradas if entrada[0] != url]
         self.entradas.append((url, titulo))
         if len(self.entradas) > self.limite:
             self.entradas.pop(0)
