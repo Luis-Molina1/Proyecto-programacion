@@ -546,17 +546,17 @@ class MiNavegador:
     def actualizar_botones_navegacion(self):
         pestana = self.obtener_pestana_actual()
         if not pestana:
-            self.btn_atras.config(state="disabled")
-            self.btn_adelante.config(state="disabled")
+            self.btn_atras.config(state="disabled", bg="SystemButtonFace")
+            self.btn_adelante.config(state="disabled", bg="SystemButtonFace")
             return
         if pestana.historial_atras:
-            self.btn_atras.config(state="normal")
+            self.btn_atras.config(state="normal", bg="#87CEEB")
         else:
-            self.btn_atras.config(state="disabled")
+            self.btn_atras.config(state="disabled", bg="SystemButtonFace")
         if pestana.historial_adelante:
-            self.btn_adelante.config(state="normal")
+            self.btn_adelante.config(state="normal", bg="#87CEEB")
         else:
-            self.btn_adelante.config(state="disabled")
+            self.btn_adelante.config(state="disabled", bg="SystemButtonFace")
 
     def notificar_cambio_modo(self):
         if self.modo_offline.get():
