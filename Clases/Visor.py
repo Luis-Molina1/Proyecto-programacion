@@ -23,6 +23,11 @@ class VisorHTML(HTMLParser):
         self.list_stack = []
         self.in_button = False
         self.button_text = ""
+        self.container_stack = []
+        self.center_frames = []
+        self.current_container = None
+        self.current_row_frame = None
+        self.button_parent = None
         self.text_widget.bind("<Configure>", self._redimensionar_hrs, add="+")
 
         self.text_widget.tag_configure("h1", font=("Arial", 25, "bold"), spacing1=12, spacing3=6)
@@ -43,7 +48,44 @@ class VisorHTML(HTMLParser):
 
         self.text_widget.tag_configure("link", foreground="#0066cc", underline=True)
         self.text_widget.tag_configure("link_hover", foreground="#66b2ff", underline=True)
+        self.text_widget.tag_configure("center", justify="center")
+        self.text_widget.tag_configure("right", justify="right")
         self.text_widget.tag_configure("error_tag", foreground="red", font=("Arial", 10, "bold"))
+        self._input_by_id = {}
+        self.align_stack = []
+
+    def _registrar_input(self, input_id, widget, placeholder=""):
+        self._input_by_id[input_id] = {
+            "widget": widget,
+            "placeholder": placeholder
+        }
+
+    def _limpiar_placeholder(self, entry):
+        if hasattr(entry, "placeholder_text") and entry.get() == entry.placeholder_text:
+            entry.delete(0, tk.END)
+
+    def _crear_callback_desde_onclick(self, onclick):
+        onclick = onclick.strip()
+        if onclick.startswith("buscar"):
+            return self._ejecutar_buscar
+        return None
+
+    def _ejecutar_buscar(self):
+        if not self.on_link_click:
+            return
+
+        termino = ""
+        if "campoBusqueda" in self._input_by_id:
+            entry_widget = self._input_by_id["campoBusqueda"]["widget"]
+            termino = entry_widget.get().strip()
+            placeholder = self._input_by_id["campoBusqueda"]["placeholder"]
+            if placeholder and termino == placeholder:
+                termino = ""
+
+        termino = termino.strip()
+        if termino:
+            termino_encoded = urllib.parse.quote(termino.lower())
+            self.on_link_click(f"search://{termino_encoded}")
 
     def asegurar_nueva_linea(self):
         #evita insertar saltos de línea consecutivos
@@ -55,6 +97,11 @@ class VisorHTML(HTMLParser):
         nuevo_ancho = self.text_widget.winfo_width()-5
         if nuevo_ancho > 0:
             for frame in self.hr_frames:
+                try:
+                    frame.config(width=nuevo_ancho)
+                except tk.TclError:
+                    pass
+            for frame in self.center_frames:
                 try:
                     frame.config(width=nuevo_ancho)
                 except tk.TclError:
@@ -75,10 +122,33 @@ class VisorHTML(HTMLParser):
             self.tags_a_ignorar.append(tag)
             return
 
-        if tag in ("ul", "ol"):
-            self.list_stack.append({"type": tag, "count": 1})
+        if tag == "center":
             self.asegurar_nueva_linea()
+            center_frame = tk.Frame(self.text_widget)
+            self.text_widget.window_create(tk.END, window=center_frame)
+            self.text_widget.insert(tk.END, "\n")
+            self.container_stack.append(center_frame)
+            self.center_frames.append(center_frame)
+            self.current_container = center_frame
+            self.current_row_frame = None
             return
+
+        if tag == "p" and self.current_container is not None:
+            self.current_row_frame = tk.Frame(self.current_container)
+            self.current_row_frame.pack(anchor="center", pady=5)
+            return
+
+        # block-level containers
+        if tag in ("div", "section", "article", "header", "nav", "aside", "footer", "p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol"):
+            self.asegurar_nueva_linea()
+            align = None
+            dic_attrs = dict(attrs)
+            align_val = dic_attrs.get("align", "").lower()
+            if align_val in ("center", "right"):
+                self.align_stack.append(align_val)
+            if tag in ("ul", "ol"):
+                self.list_stack.append({"type": tag, "count": 1})
+                return
 
         if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "em", "p", "li", "label"):
             self.estilos_activos.append(tag)
@@ -124,22 +194,49 @@ class VisorHTML(HTMLParser):
             tipo = dic_attrs.get("type", "text").lower()
             val = dic_attrs.get("value", "")
             placeholder = dic_attrs.get("placeholder", "")
+            input_id = dic_attrs.get("id")
             if tipo in ("button", "submit", "reset"):
                 texto_btn = val if val else "Button"
-                btn = tk.Button(self.text_widget, text=texto_btn, font=("Arial", 12), cursor="hand2")
-                self.text_widget.window_create(tk.END, window=btn)
+                parent = self.current_row_frame if self.current_row_frame is not None else self.text_widget
+                btn = tk.Button(parent, text=texto_btn, font=("Arial", 12), cursor="hand2")
+                if parent == self.text_widget:
+                    self.text_widget.window_create(tk.END, window=btn)
+                else:
+                    btn.pack(side="left", padx=5, pady=5)
             else:
-                entry = tk.Entry(self.text_widget, font=("Arial", 12))
+                entry = tk.Entry(self.current_row_frame if self.current_row_frame is not None else self.text_widget, font=("Arial", 12), width=40)
                 if val:
                     entry.insert(0, val)
                 elif placeholder:
                     entry.insert(0, placeholder)
-                self.text_widget.window_create(tk.END, window=entry)
-            self.text_widget.insert(tk.END, " ")
+                    entry.placeholder_text = placeholder
+                    entry.bind("<FocusIn>", lambda e, ent=entry: self._limpiar_placeholder(ent))
+                if input_id:
+                    self._registrar_input(input_id, entry, placeholder)
+                if self.current_row_frame is not None:
+                    entry.pack(side="left", padx=5, pady=5)
+                else:
+                    self.text_widget.window_create(tk.END, window=entry)
+            if self.current_row_frame is None:
+                self.text_widget.insert(tk.END, " ")
 
         elif tag == "button":
-            self.in_button = True
-            self.button_text = ""
+            if self.current_container is not None and self.current_row_frame is not None:
+                self.in_button = True
+                self.button_text = ""
+                self.button_onclick = None
+                self.button_parent = self.current_row_frame
+                for k, v in attrs:
+                    if k.lower() == "onclick":
+                        self.button_onclick = v
+            else:
+                self.in_button = True
+                self.button_text = ""
+                self.button_onclick = None
+                self.button_parent = None
+                for k, v in attrs:
+                    if k.lower() == "onclick":
+                        self.button_onclick = v
 
         elif tag == "img":
             dic_attrs = dict(attrs)
@@ -151,6 +248,19 @@ class VisorHTML(HTMLParser):
         if tag in ("script", "style", "head", "title"):
             if tag in self.tags_a_ignorar:
                 self.tags_a_ignorar.remove(tag)
+            return
+
+        if tag == "center":
+            if self.container_stack:
+                self.container_stack.pop()
+            self.current_container = self.container_stack[-1] if self.container_stack else None
+            self.current_row_frame = None
+            self.asegurar_nueva_linea()
+            return
+
+        if tag == "p" and self.current_container is not None:
+            self.current_row_frame = None
+            self.asegurar_nueva_linea()
             return
 
         if tag in self.estilos_activos:
@@ -169,15 +279,30 @@ class VisorHTML(HTMLParser):
                 self.list_stack.pop()
             self.asegurar_nueva_linea()
 
+        elif tag in ("div", "section", "article", "header", "nav", "aside", "footer"):
+            self.asegurar_nueva_linea()
+
         elif tag == "button":
             if self.in_button:
                 self.in_button = False
                 texto_btn = self.button_text.strip()
                 if not texto_btn:
                     texto_btn = "Button"
-                btn = tk.Button(self.text_widget, text=texto_btn, font=("Arial", 12), cursor="hand2")
-                self.text_widget.window_create(tk.END, window=btn)
-                self.text_widget.insert(tk.END, " ")
+                parent = getattr(self, "button_parent", None)
+                if parent is None:
+                    parent = self.text_widget
+                btn = tk.Button(parent, text=texto_btn, font=("Arial", 12), cursor="hand2")
+                if getattr(self, "button_onclick", None):
+                    callback = self._crear_callback_desde_onclick(self.button_onclick)
+                    if callback:
+                        btn.config(command=callback)
+                if parent == self.text_widget:
+                    self.text_widget.window_create(tk.END, window=btn)
+                    self.text_widget.insert(tk.END, " ")
+                else:
+                    btn.pack(side="left", padx=5, pady=5)
+                self.button_onclick = None
+                self.button_parent = None
 
     def handle_data(self, data):
         if self.tags_a_ignorar:
@@ -193,7 +318,28 @@ class VisorHTML(HTMLParser):
         if self.link_stack and self.link_stack[-1]:
             self._insertar_link(texto, self.link_stack[-1])
         else:
-            self.text_widget.insert(tk.END, texto + " ", self.estilos_activos)
+            if self.current_container is not None and self.estilos_activos:
+                style = self.estilos_activos[-1]
+                if style in ("h1", "h2", "h3", "h4", "h5", "h6", "p"):
+                    parent = self.current_row_frame if self.current_row_frame is not None else self.current_container
+                    font_map = {
+                        "h1": ("Arial", 25, "bold"),
+                        "h2": ("Arial", 20, "bold"),
+                        "h3": ("Arial", 18, "bold"),
+                        "h4": ("Arial", 15, "bold"),
+                        "h5": ("Arial", 12, "bold"),
+                        "h6": ("Arial", 10, "bold")
+                    }
+                    font = font_map.get(style, ("Arial", 12))
+                    label = tk.Label(parent, text=texto, font=font, justify="center")
+                    label.pack()
+                    return
+            tags = self.estilos_activos.copy()
+            if self.align_stack:
+                align_tag = self.align_stack[-1]
+                if align_tag in ("center", "right"):
+                    tags.append(align_tag)
+            self.text_widget.insert(tk.END, texto + " ", tags)
 
     def _insertar_link(self, texto, url):
         self.link_index += 1
@@ -245,3 +391,9 @@ class VisorHTML(HTMLParser):
         self.list_stack = []
         self.in_button = False
         self.button_text = ""
+        self.container_stack = []
+        self.center_frames = []
+        self.current_container = None
+        self.current_row_frame = None
+        self._input_by_id = {}
+        self.align_stack = []

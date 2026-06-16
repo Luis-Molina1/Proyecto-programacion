@@ -275,15 +275,29 @@ class MiNavegador:
 
 
     def abrir_link(self, url):
-        pestana = self.obtener_pestana_actual()
-        if not pestana:
+        # Abrir enlaces http/https en una nueva pestaña; búsquedas internas se manejan en la pestaña actual
+        if not url:
             return
 
         parsed = urlparse(url)
+
         if parsed.scheme == "search":
+            # búsqueda interna: cargar en la pestaña actual
+            pestana = self.obtener_pestana_actual()
+            if not pestana:
+                return
             termino = unquote(parsed.netloc + parsed.path)
             self.cargar_busqueda_en_pestana(termino, pestana)
             return
+
+        # Si es un enlace externo http(s), abrir en nueva pestaña
+        if parsed.scheme in ("http", "https"):
+            self.nueva_pestana()
+            pestana = self.obtener_pestana_actual()
+        else:
+            pestana = self.obtener_pestana_actual()
+            if not pestana:
+                return
 
         if not parsed.scheme:
             current_url = pestana.obtener_url()

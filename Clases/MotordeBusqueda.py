@@ -122,15 +122,13 @@ class MotordeBusqueda:
     </style>
 </head>
 <body>
-    <div class="contenedor">
-        <div class="titulo">Super Meme Finder</div>
-        
-        <div class="buscador">
+    <center>
+        <h1>Super Meme Finder</h1>
+        <p>
             <input type="text" id="campoBusqueda" placeholder="Ingresa tu búsqueda..." />
-        </div>
-        
-        <button class="boton-buscar" onclick="buscar()">Buscar</button>
-    </div>
+            <button class="boton-buscar" onclick="buscar()">Buscar</button>
+        </p>
+    </center>
     
     <script>
         document.getElementById('campoBusqueda').addEventListener('keypress', function(event) {
