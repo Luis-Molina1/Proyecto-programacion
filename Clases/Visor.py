@@ -190,11 +190,13 @@ class VisorHTML(HTMLParser):
 
         elif tag == "a":
             href = None
+            target_blank = False
             for k, v in attrs:
                 if k == "href":
                     href = v
-                    break
-            self.link_stack.append(href)
+                elif k == "target" and str(v).lower() == "_blank":
+                    target_blank = True
+            self.link_stack.append((href, target_blank))
 
         elif tag == "br":
             self.text_widget.insert(tk.END, "\n")
@@ -360,8 +362,9 @@ class VisorHTML(HTMLParser):
         texto = data.strip()
         if not texto:
             return
-        if self.link_stack and self.link_stack[-1]:
-            self._insertar_link(texto, self.link_stack[-1])
+        if self.link_stack and self.link_stack[-1] and self.link_stack[-1][0]:
+            url, target_blank = self.link_stack[-1]
+            self._insertar_link(texto, url, target_blank)
         else:
             if self.current_container is not None and self.estilos_activos:
                 style = self.estilos_activos[-1]
@@ -386,16 +389,28 @@ class VisorHTML(HTMLParser):
                     tags.append(align_tag)
             self.text_widget.insert(tk.END, texto + " ", tags)
 
-    def _insertar_link(self, texto, url):
+    def _insertar_link(self, texto, url, target_blank=False):
         self.link_index += 1
         tag_link = f"link_{self.link_index}"
 
         # insertar texto con el tag del link
         self.text_widget.insert(tk.END,texto,("link", tag_link))
 
+        # Solo forzar nuevas pestañas para páginas de resultados de búsqueda
+        # y para enlaces explícitamente marcados con target="_blank".
+        abrir_en_nueva_pestana = target_blank
+        if not abrir_en_nueva_pestana and getattr(self.pestana, "es_pagina_busqueda", False):
+            abrir_en_nueva_pestana = url.startswith(("http://", "https://"))
+        elif not abrir_en_nueva_pestana:
+            abrir_en_nueva_pestana = False
+
         # Click
         if self.on_link_click:
-            self.text_widget.tag_bind(tag_link,"<Button-1>",lambda e, u=url: self.on_link_click(u))
+            self.text_widget.tag_bind(
+                tag_link,
+                "<Button-1>",
+                lambda e, u=url, abrir_en_nueva_pestana=abrir_en_nueva_pestana: self.on_link_click(u, nueva_pestana=abrir_en_nueva_pestana)
+            )
 
         self.text_widget.tag_bind(tag_link,"<Enter>",lambda e, t=tag_link: (self.text_widget.tag_configure(t, foreground="#66b2ff"),self.text_widget.config(cursor="hand2"))
         )

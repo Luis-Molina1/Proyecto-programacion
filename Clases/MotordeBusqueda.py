@@ -259,7 +259,7 @@ class MotordeBusqueda:
             items_html += f"""
             <div class=\"resultado\">
                 <div class=\"url\">{resultado['url']}</div>
-                <h3><a href=\"{resultado['url']}\">{resultado['titulo']}</a></h3>
+                <h3><a href=\"{resultado['url']}\" target=\"_blank\" rel=\"noopener noreferrer\">{resultado['titulo']}</a></h3>
                 <p class=\"descripcion\">{resultado['descripcion']}</p>
             </div>
             """

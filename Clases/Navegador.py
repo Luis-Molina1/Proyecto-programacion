@@ -274,8 +274,13 @@ class MiNavegador:
             self.app.deiconify()
 
 
-    def abrir_link(self, url):
-        pestana = self.obtener_pestana_actual()
+    def abrir_link(self, url, nueva_pestana=False):
+        if nueva_pestana:
+            pestana = self.nueva_pestana()
+            self.notebook.select(pestana.frame)
+            self.app.update_idletasks()
+        else:
+            pestana = self.obtener_pestana_actual()
         if not pestana:
             return
 
@@ -295,6 +300,7 @@ class MiNavegador:
                 url = f"file:///{ruta_rel.replace('\\', '/') }"
 
         pestana.url_var.set(url)
+        pestana.frame.update_idletasks()
         pestana.cargar()
 
     def cargar_busqueda_en_pestana(self, termino, pestana=None):
@@ -308,6 +314,7 @@ class MiNavegador:
 
         if pestana is None:
             pestana = self.obtener_pestana_actual()
+        pestana.es_pagina_busqueda = True
         pestana.url_var.set(file_url)
         pestana.cargar()
 
@@ -472,6 +479,7 @@ class MiNavegador:
         )
 
         self.pestanas.append(pestana)
+        return pestana
 
     def siguiente_pestana(self, event=None):
         total = len(self.pestanas)
