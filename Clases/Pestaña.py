@@ -25,6 +25,7 @@ class Pestana:
         self.historial_atras = []
         self.historial_adelante = []
         self.ia_activo = False
+        self.es_pagina_busqueda = False
         
         self.area_texto = tk.Text(self.frame, bg=bg, fg=fg, font=("Arial", 12))
         
