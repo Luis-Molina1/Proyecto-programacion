@@ -23,6 +23,9 @@ class VisorHTML(HTMLParser):
         self.list_stack = []
         self.in_button = False
         self.button_text = ""
+        self.in_textarea = False
+        self.textarea_text = ""
+        self.textarea_attrs = {}
         self.container_stack = []
         self.center_frames = []
         self.current_container = None
@@ -112,14 +115,33 @@ class VisorHTML(HTMLParser):
             "script", "style", "head", "title", "ul", "ol", "h1", "h2", "h3", 
             "h4", "h5", "h6", "b", "strong", "i", "em", "p", "li", "label", 
             "a", "br", "hr", "input", "button", "img", "html", "body", "div", 
-            "span", "meta", "link", "center", "div", "section", "article", "span", "footer",
-            "header", "nav", "aside", "figure"
+            "span", "meta", "link", "center", "section", "article", "footer",
+            "header", "nav", "aside", "figure", "figcaption", "table", "tr", "th", "td",
+            "form", "select", "option", "textarea", "audio", "video", "iframe", "canvas", "svg",
+            "source", "track", "picture", "object", "embed"
         ]
         if tag not in etiquetas_reconocidas:
             self.text_widget.insert(tk.END, f"[Etiqueta no reconocida: {tag}] ", "error_tag")
 
-        if tag in ("script", "style", "head", "title"):
+        if tag in ("script", "style", "head", "title", "audio", "video", "iframe", "canvas", "svg", "picture", "object", "embed"):
             self.tags_a_ignorar.append(tag)
+            if tag in ("audio", "video", "iframe", "canvas", "svg", "picture", "object", "embed"):
+                self.asegurar_nueva_linea()
+                if tag in ("video", "iframe", "canvas", "picture", "object", "embed"):
+                    ancho = 300
+                    alto = 150
+                else:
+                    ancho = 250
+                    alto = 50
+                texto_placeholder = f"[ {tag.capitalize()} ]"
+                
+                placeholder_frame = tk.Frame(self.text_widget, width=ancho, height=alto, bg="#e0e0e0", bd=1, relief="solid")
+                placeholder_frame.pack_propagate(False)
+                lbl = tk.Label(placeholder_frame, text=texto_placeholder, bg="#e0e0e0", fg="#555555", font=("Arial", 10, "italic"))
+                lbl.pack(expand=True)
+                
+                self.text_widget.window_create(tk.END, window=placeholder_frame)
+                self.asegurar_nueva_linea()
             return
 
         if tag == "center":
@@ -238,6 +260,11 @@ class VisorHTML(HTMLParser):
                     if k.lower() == "onclick":
                         self.button_onclick = v
 
+        elif tag == "textarea":
+            self.in_textarea = True
+            self.textarea_text = ""
+            self.textarea_attrs = dict(attrs)
+
         elif tag == "img":
             dic_attrs = dict(attrs)
             src = dic_attrs.get("src")
@@ -245,7 +272,7 @@ class VisorHTML(HTMLParser):
                 self._insertar_imagen(src)
 
     def handle_endtag(self, tag):
-        if tag in ("script", "style", "head", "title"):
+        if tag in ("script", "style", "head", "title", "audio", "video", "iframe", "canvas", "svg", "picture", "object", "embed"):
             if tag in self.tags_a_ignorar:
                 self.tags_a_ignorar.remove(tag)
             return
@@ -304,12 +331,30 @@ class VisorHTML(HTMLParser):
                 self.button_onclick = None
                 self.button_parent = None
 
+        elif tag == "textarea":
+            if self.in_textarea:
+                self.in_textarea = False
+                texto_ta = self.textarea_text
+                rows = int(self.textarea_attrs.get("rows", 4))
+                cols = int(self.textarea_attrs.get("cols", 40))
+                
+                ta_widget = tk.Text(self.text_widget, width=cols, height=rows, font=("Arial", 12), bd=1, relief="solid")
+                if texto_ta:
+                    ta_widget.insert(tk.END, texto_ta)
+                
+                self.text_widget.window_create(tk.END, window=ta_widget)
+                self.text_widget.insert(tk.END, " ")
+
     def handle_data(self, data):
         if self.tags_a_ignorar:
             return
             
         if self.in_button:
             self.button_text += data
+            return
+
+        if self.in_textarea:
+            self.textarea_text += data
             return
             
         texto = data.strip()
@@ -410,3 +455,6 @@ class VisorHTML(HTMLParser):
         self.current_row_frame = None
         self._input_by_id = {}
         self.align_stack = []
+        self.in_textarea = False
+        self.textarea_text = ""
+        self.textarea_attrs = {}

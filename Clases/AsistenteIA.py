@@ -3,9 +3,11 @@ import socket
 import json
 
 class AsistenteIA:
-    API_KEY= "" #no la subo a github pq se borra
+    # Lee la clave desde el archivo de texto simple
+    with open("api_key.txt", "r") as f:
+        API_KEY = f.read().strip()
     def __init__(self):
-        modelo="gemini-3.5-flash"
+        modelo="gemini-2.5-flash"
         self.timeout= 10
         self.dominio= "generativelanguage.googleapis.com" 
         self.modelo= modelo 
