@@ -56,9 +56,9 @@ class MiNavegador:
         self.actualizar_menu_historial()
         self.actualizar_menu_fav()
 
-        self.btn_atras = tk.Button(self.frame_nav, text="←", width=3, command=self.retroceder_pag, state="disabled")
+        self.btn_atras = tk.Button(self.frame_nav, text="❮", width=3, command=self.retroceder_pag, state="disabled")
         self.btn_atras.pack(side="left", padx=3)
-        self.btn_adelante = tk.Button(self.frame_nav, text="→", width=3, command=self.avanzar_pag, state="disabled")
+        self.btn_adelante = tk.Button(self.frame_nav, text="❯", width=3, command=self.avanzar_pag, state="disabled")
         self.btn_adelante.pack(side="left", padx=3)
         
 
