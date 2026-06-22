@@ -5,7 +5,7 @@ from urllib.request import urlopen
 import urllib.parse
 from urllib.parse import urljoin
 
-class VisorHTML(HTMLParser):
+class RenderAvanzado(HTMLParser):
     def __init__(self, text_widget, on_link_click=None, pestana=None):
         super().__init__()
         

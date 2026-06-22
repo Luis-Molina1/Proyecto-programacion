@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.parse
 from tkinter import messagebox
-from Clases.Visor import VisorHTML
+from Clases.RenderAvanzado import RenderAvanzado
 from Clases.Historial import Historial
 from Clases.ClienteHTTP import ClienteHTTP
 from Clases.AsistenteIA import AsistenteIA
@@ -49,7 +49,7 @@ class Pestana:
         except Exception:
             pass
         self.text_widget.delete("1.0", tk.END)
-        self.visor.reset()
+        self.render_avanzado.reset()
 
         if hasattr(self, "navegador") and self.navegador and self.navegador.modo_offline.get():
             parsed= urllib.parse.urlparse(url)
@@ -99,7 +99,7 @@ class Pestana:
 
             _, _, contenido = resultado
             estatus, razon, contenido = resultado
-            self.visor.feed(contenido)
+            self.render_avanzado.feed(contenido)
 
 
             match_dominio = re.search(r"(https?)://([^/]+)", url)
@@ -150,7 +150,7 @@ class Pestana:
                 contenido = f.read()
 
             # usar el visor ya creado
-            self.visor.feed(contenido)
+            self.render_avanzado.feed(contenido)
 
             # intentar extraer <title> del contenido (para archivos locales)
             titulo_extraido = None
@@ -302,7 +302,7 @@ class Pestana:
         self.text_widget = tk.Text(self.frame_contenido, wrap="word", yscrollcommand=lambda inicio, fin: self.auto_desplazamiento(self.barra_desplazamiento, inicio, fin))
         self.barra_desplazamiento.config(command=self.text_widget.yview)    
         self.text_widget.pack(fill="both", expand=True)
-        self.visor = VisorHTML(
+        self.render_avanzado = RenderAvanzado(
             self.text_widget,
             on_link_click=self.abrir_link,
             pestana=self
@@ -320,7 +320,7 @@ class Pestana:
         self.btn_ia_consultar.pack(side="left", padx=2)
         self.text_ia = tk.Text(self.frame_overlay, wrap="word", font=("Arial", 11), bg="white")
         self.text_ia.pack(fill="both", expand=True, padx=5, pady=5)
-        self.visor_ia = VisorHTML(
+        self.render_avanzado_ia = RenderAvanzado(
             self.text_ia,
             on_link_click=self.abrir_link,
             pestana=self
@@ -415,8 +415,8 @@ class Pestana:
         if not self.ia_activo:
             self.ia_activo = True
             self.text_ia.delete("1.0", tk.END)
-            self.visor_ia.reset()
-            self.visor_ia.feed("Escribe tu pregunta arriba</p>")
+            self.render_avanzado_ia.reset()
+            self.render_avanzado_ia.feed("Escribe tu pregunta arriba</p>")
             self.frame_overlay.lift()
             self.entry_ia.focus()
             self.btn_ia_toggle.config(text="Volver")
@@ -442,11 +442,11 @@ class Pestana:
         self.btn_ia_consultar.config(state="normal")
         self.entry_ia.config(state="normal")
         self.text_ia.delete("1.0", tk.END)
-        self.visor_ia.reset()
+        self.render_avanzado_ia.reset()
         if error:
-            self.visor_ia.feed(f"<p>error: {error}</p>")
+            self.render_avanzado_ia.feed(f"<p>error: {error}</p>")
             self.estado_var.set(f"Error")
             return
-        self.visor_ia.feed(f"{respuesta}")
+        self.render_avanzado_ia.feed(f"{respuesta}")
         self.ia_var.set("")
         self.estado_var.set("pregunta completa")
