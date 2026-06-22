@@ -70,11 +70,23 @@ class Pestana:
             except Exception:
                 pass
             resultado = ClienteHTTP().obtener_contenido(url, segundos_retraso=0)
-            
+
+            # Manejo de error de puerto no soportado
+            if isinstance(resultado, tuple) and len(resultado) == 3 and resultado[0] == "error_puerto":
+                mensaje_error = resultado[1]
+                self.text_widget.insert(tk.END, mensaje_error)
+                self.estado_var.set(mensaje_error)
+                return
+
             # si fallo la conexion https intentamos por http
             if resultado is None and url.startswith("https://"):
                 url_fallback = url.replace("https://", "http://", 1)
                 resultado = ClienteHTTP().obtener_contenido(url_fallback, segundos_retraso=0)
+                if isinstance(resultado, tuple) and len(resultado) == 3 and resultado[0] == "error_puerto":
+                    mensaje_error = resultado[1]
+                    self.text_widget.insert(tk.END, mensaje_error)
+                    self.estado_var.set(mensaje_error)
+                    return
                 if resultado is not None:
                     url = url_fallback
                     # actualiza la barra de direcciones con http
@@ -258,10 +270,11 @@ class Pestana:
             self.abrir_link(url)
             return
 
-        # si no tiene http, https, file, al inicio y si un nombre.algo lo buscara
-        if not parsed.scheme and not os.path.isabs(url):
-            if "." in url and " " not in url:
-                url = "https://" + url
+        # si no tiene esquema válido (http, https, file) intentar completarlo
+        if parsed.scheme not in ("http", "https", "file", "search"):
+            # Puede ser: "35.209.140.243:3000/login", "www.dominio.cl", "123.4.5.6/ruta"
+            if " " not in url and ("." in url or url.replace(":", "").replace("/", "").replace(".", "").isdigit()):
+                url = "http://" + url
                 self.url_var.set(url)
 
         self.cargar_archivo(url)
