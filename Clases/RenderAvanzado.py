@@ -398,11 +398,33 @@ class RenderAvanzado(HTMLParser):
 
         # Solo forzar nuevas pestañas para páginas de resultados de búsqueda
         # y para enlaces explícitamente marcados con target="_blank".
+
+        import tempfile
+        import os
+        import urllib.parse
+
         abrir_en_nueva_pestana = target_blank
-        if not abrir_en_nueva_pestana and getattr(self.pestana, "es_pagina_busqueda", False):
+
+        # Detectar si es archivo temporal
+        es_temporal = False
+        if url:
+            parsed = urllib.parse.urlparse(url)
+            if parsed.scheme == "file":
+                ruta = parsed.path
+                try:
+                    ruta = os.path.abspath(ruta)
+                    temp_dir = os.path.abspath(tempfile.gettempdir())
+                    if ruta.startswith(temp_dir):
+                        es_temporal = True
+                except Exception:
+                    pass
+
+        # Reglas
+        if es_temporal:
+            abrir_en_nueva_pestana = True
+        elif not abrir_en_nueva_pestana and getattr(self.pestana, "es_pagina_busqueda", False):
             abrir_en_nueva_pestana = url.startswith(("http://", "https://"))
-        elif not abrir_en_nueva_pestana:
-            abrir_en_nueva_pestana = False
+
 
         # Click
         if self.on_link_click:
