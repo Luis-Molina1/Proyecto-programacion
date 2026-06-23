@@ -30,6 +30,16 @@ class RenderAvanzado(HTMLParser):
         self.center_frames = []
         self.current_container = None
         self.current_row_frame = None
+        
+        self.current_table = None
+        self.current_row = 0
+        self.current_col = 0
+
+                
+        self.current_cell_text = ""
+        self.current_cell_tag = None
+
+
         self.button_parent = None
         self.text_widget.bind("<Configure>", self._redimensionar_hrs, add="+")
 
@@ -273,6 +283,29 @@ class RenderAvanzado(HTMLParser):
             if src:
                 self._insertar_imagen(src)
 
+        
+        elif tag == "table":
+            self.asegurar_nueva_linea()
+
+            self.current_table = tk.Frame(self.text_widget, bd=1, relief="solid")
+            self.text_widget.window_create(tk.END, window=self.current_table)
+
+            self.current_row = 0
+            self.current_col = 0
+
+        
+        elif tag == "tr":
+            if self.current_table is not None:
+                self.current_row += 1
+                self.current_col = 0
+            
+        elif tag in ("td", "th"):
+            if self.current_table is not None:
+                self.current_cell_tag = tag
+                self.current_cell_text = ""
+
+
+
     def handle_endtag(self, tag):
         if tag in ("script", "style", "head", "title", "audio", "video", "iframe", "canvas", "svg", "picture", "object", "embed"):
             if tag in self.tags_a_ignorar:
@@ -347,7 +380,40 @@ class RenderAvanzado(HTMLParser):
                 self.text_widget.window_create(tk.END, window=ta_widget)
                 self.text_widget.insert(tk.END, " ")
 
+        
+        elif tag in ("td", "th"):
+            if self.current_table is not None and self.current_cell_tag:
+                texto = self.current_cell_text.strip()
+
+                font = ("Arial", 12)
+                if tag == "th":
+                    font = ("Arial", 12, "bold")
+
+                celda = tk.Label(
+                    self.current_table,
+                    text=texto,
+                    borderwidth=1,
+                    relief="solid",
+                    padx=5,
+                    pady=5,
+                    font=font
+                )
+
+                celda.grid(row=self.current_row, column=self.current_col, sticky="nsew")
+
+                self.current_col += 1
+                self.current_cell_tag = None
+                self.current_cell_text = ""
+
+
     def handle_data(self, data):
+        
+        
+        if hasattr(self, "current_cell_tag") and self.current_cell_tag:
+            self.current_cell_text += data
+            return
+
+
         if self.tags_a_ignorar:
             return
             
@@ -490,6 +556,9 @@ class RenderAvanzado(HTMLParser):
         self.center_frames = []
         self.current_container = None
         self.current_row_frame = None
+        self.current_table = None
+        self.current_row = 0
+        self.current_col = 0
         self._input_by_id = {}
         self.align_stack = []
         self.in_textarea = False
