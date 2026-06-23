@@ -101,7 +101,7 @@ class MotordeBusqueda:
 
     <br>
 
-    <p>Busca cualquier cosa en el navegador</p>
+    <p>Busca CASI cualquier cosa en el navegador, de las infinitas posibilidades solo 10 disponibles</p>
 
     <br><br>
 
