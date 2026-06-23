@@ -422,7 +422,6 @@ class Pestana:
             self.render_avanzado_ia.feed(f"""<center><img src="file:///{ruta}"></center>""")
 
 
-            
             self.frame_overlay.lift()
             self.entry_ia.focus()
             self.btn_ia_toggle.config(text="Volver")

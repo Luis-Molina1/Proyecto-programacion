@@ -86,101 +86,70 @@ class MotordeBusqueda:
             ]
         }
 
+
     def obtener_pagina_principal(self):
-        """Retorna el HTML de la página principal del motor de búsqueda"""
         html = """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Buscador</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f0f0f0;
-        }
-        
-        .contenedor {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .titulo {
-            font-size: 64px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 50px;
-        }
-        
-        .buscador {
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-        }
-        
-        .buscador input {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #333;
-            border-radius: 5px;
-            outline: none;
-        }
-        
-        .boton-buscar {
-            background-color: #333;
-            color: white;
-            padding: 12px 40px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .boton-buscar:hover {
-            background-color: #555;
-        }
-    </style>
-</head>
-<body>
+    <!DOCTYPE html>
+    <html>
+    <body>
+
     <center>
-        <h1>Super Meme Finder</h1>
-        <p>
-            <input type="text" id="campoBusqueda" placeholder="Ingresa tu búsqueda..." />
-            <button class="boton-buscar" onclick="buscar()">Buscar</button>
-        </p>
+
+    <br><br><br>
+
+    <h1>Super Meme Finder 🚀</h1>
+
+    <br>
+
+    <p>Busca cualquier cosa en el navegador</p>
+
+    <br><br>
+
+    <p>
+    <input type="text" id="campoBusqueda" placeholder="Escribe tu búsqueda..." />
+    </p>
+
+    <p>
+    <button onclick="buscar()">Buscar</button>
+    </p>
+
+    <br><br>
+
+    <hr>
+
+    <br>
+
+    <h3>Sugerencias populares</h3>
+
+    <ul>
+    <li><a href="search://universidades en chile">Universidades en Chile</a></li>
+    <li><a href="search://clima en mi ciudad">Clima en mi ciudad</a></li>
+    <li><a href="search://locales de comida">Locales de comida</a></li>
+    <li><a href="search://ultimos memes">Últimos memes</a></li>
+    <li><a href="search://top juegos 2026">Top juegos 2026</a></li>
+    <li><a href="search://gatos">Gatos</a></li>
+    </ul>
+
+    <br><br>
+
+    <p>Hecho con Fe en cristo rey</p>
+
     </center>
-    
+
     <script>
-        document.getElementById('campoBusqueda').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                buscar();
-            }
-        });
-        
-        function buscar() {
-            var termino = document.getElementById('campoBusqueda').value;
-            if (termino.trim()) {
-                window.location.href = 'search://' + encodeURIComponent(termino.toLowerCase());
-            }
+    function buscar() {
+        var termino = document.getElementById('campoBusqueda').value;
+        if (termino.trim()) {
+            window.location.href = 'search://' + encodeURIComponent(termino.toLowerCase());
         }
+    }
     </script>
-</body>
-</html>
-        """
+
+    </body>
+    </html>
+    """
         return html
+
 
     def _normalizar_termino(self, termino):
         termino = termino.lower().strip()

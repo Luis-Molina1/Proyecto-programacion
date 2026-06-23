@@ -66,6 +66,11 @@ class RenderAvanzado(HTMLParser):
         self.text_widget.tag_configure("error_tag", foreground="red", font=("Arial", 10, "bold"))
         self._input_by_id = {}
         self.align_stack = []
+    
+
+    def en_center(self):
+        return self.center_frames and self.current_container == self.center_frames[-1]
+
 
     def _registrar_input(self, input_id, widget, placeholder=""):
         self._input_by_id[input_id] = {
@@ -154,16 +159,30 @@ class RenderAvanzado(HTMLParser):
                 self.asegurar_nueva_linea()
             return
 
+
         if tag == "center":
             self.asegurar_nueva_linea()
+
+            # Frame que ocupará todo el ancho
             center_frame = tk.Frame(self.text_widget)
+
             self.text_widget.window_create(tk.END, window=center_frame)
             self.text_widget.insert(tk.END, "\n")
+
+            # expandir al ancho del text widget
+            self.text_widget.update_idletasks()
+            ancho = self.text_widget.winfo_width() - 10
+            if ancho > 0:
+                center_frame.config(width=ancho)
+
+            # guardar referencia
             self.container_stack.append(center_frame)
             self.center_frames.append(center_frame)
             self.current_container = center_frame
+
             self.current_row_frame = None
             return
+
 
         if tag == "p" and self.current_container is not None:
             self.current_row_frame = tk.Frame(self.current_container)
@@ -445,8 +464,9 @@ class RenderAvanzado(HTMLParser):
                         "h6": ("Arial", 10, "bold")
                     }
                     font = font_map.get(style, ("Arial", 12))
+                                        
                     label = tk.Label(parent, text=texto, font=font, justify="center")
-                    label.pack()
+                    label.pack(anchor="center")
                     return
             tags = self.estilos_activos.copy()
             if self.align_stack:
@@ -543,6 +563,8 @@ class RenderAvanzado(HTMLParser):
         except Exception as e:
             print(f"Error al cargar imagen {url_img}: {e}")
             self.text_widget.insert(tk.END, f"[Error al cargar imagen: {url_img}]\n")
+    
+
     
     def reset(self):
         super().reset()

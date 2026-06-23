@@ -65,7 +65,7 @@ class MiNavegador:
     def crear_barra_titulo(self):
         self.barra_titulo = tk.Frame(self.app, bg="#2c3e50", height=30)
         self.barra_titulo.pack(fill="x", side="top")
-        self.lbl_titulo = tk.Label(self.barra_titulo, text="Super", 
+        self.lbl_titulo = tk.Label(self.barra_titulo, text="🌐 Super Ultra Mega Navegador v99999 No Fake", 
                               bg="#2c3e50", fg="white", font=("Arial", 10, "bold"))
         self.lbl_titulo.pack(side="left", padx=10)
 
@@ -74,23 +74,72 @@ class MiNavegador:
         self.barra_titulo.bind("<B1-Motion>", self.mover_ventana)
 
         # botones de control minimizar, maximizar y cerrar
-        btn_cerrar = tk.Button(self.barra_titulo, text="✕", bg="#2c3e50", fg="#e74c3c", 
-                               command=self.confirmar_cierre, bd=0, padx=10)
-        
+        # Función auxiliar para hover moderno
+        def aplicar_hover(btn, color_normal, color_hover):
+            btn.bind("<Enter>", lambda e: btn.config(bg=color_hover))
+            btn.bind("<Leave>", lambda e: btn.config(bg=color_normal))
+
+
+        # ===== BOTÓN CERRAR =====
+        btn_cerrar = tk.Button(
+            self.barra_titulo,
+            text="✕",
+            bg="#2c3e50",
+            fg="#e74c3c",
+            command=self.confirmar_cierre,
+            bd=0,
+            padx=12,
+            pady=4,
+            font=("Segoe UI", 10),
+            cursor="hand2",
+            activebackground="#e74c3c",
+            activeforeground="white"
+        )
         btn_cerrar.pack(side="right")
 
-        
-        btn_max = tk.Button(self.barra_titulo, text="□", bg="#2c3e50", fg="white", 
-                             command=self.alternar_maximizacion, bd=0, padx=10)
+        aplicar_hover(btn_cerrar, "#2c3e50", "#c0392b")
+
+
+        # ===== BOTÓN MAXIMIZAR =====
+        btn_max = tk.Button(
+            self.barra_titulo,
+            text="□",
+            bg="#2c3e50",
+            fg="white",
+            command=self.alternar_maximizacion,
+            bd=0,
+            padx=12,
+            pady=4,
+            font=("Segoe UI", 10),
+            cursor="hand2",
+            activebackground="#4a90e2",
+            activeforeground="white"
+        )
         btn_max.pack(side="right")
 
-        btn_min = tk.Button(self.barra_titulo, text="—", bg="#2c3e50", fg="white", 
-                             command=self.minimizar, bd=0, padx=10)
+        aplicar_hover(btn_max, "#2c3e50", "#3a3a3a")
+
+
+        # ===== BOTÓN MINIMIZAR =====
+        btn_min = tk.Button(
+            self.barra_titulo,
+            text="—",
+            bg="#2c3e50",
+            fg="white",
+            command=self.minimizar,
+            bd=0,
+            padx=12,
+            pady=4,
+            font=("Segoe UI", 10),
+            cursor="hand2",
+            activebackground="#4a90e2",
+            activeforeground="white"
+        )
         btn_min.pack(side="right")
 
-        self.cambio_color(btn_cerrar,"red","#2c3e50")
-        self.cambio_color(btn_max,"gray","#2c3e50")
-        self.cambio_color(btn_min,"gray","#2c3e50")
+        aplicar_hover(btn_min, "#2c3e50", "#3a3a3a")
+
+
         
     def crear_barra_navegacion(self):
         self.frame_nav = tk.Frame(self.app, bg="#ecf0f1", pady=5)
