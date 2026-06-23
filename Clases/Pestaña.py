@@ -416,7 +416,13 @@ class Pestana:
             self.ia_activo = True
             self.text_ia.delete("1.0", tk.END)
             self.render_avanzado_ia.reset()
-            self.render_avanzado_ia.feed("Escribe tu pregunta arriba</p>")
+
+            ruta = os.path.abspath("imagenes/ia.png").replace("\\", "/")
+            
+            self.render_avanzado_ia.feed(f"""<center><img src="file:///{ruta}"></center>""")
+
+
+            
             self.frame_overlay.lift()
             self.entry_ia.focus()
             self.btn_ia_toggle.config(text="Volver")
